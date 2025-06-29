@@ -1,0 +1,23 @@
+# Fennel Validator Configuration
+
+[validator]
+name = "External-Validator-{HOSTNAME}"
+network = "staging"  # Options: staging, mainnet
+data_dir = "./data"
+
+[network]
+port = 30333
+rpc_port = 9944
+prometheus_port = 9615
+
+[security]
+rpc_external = false  # Set to true only if needed
+prometheus_external = false  # Set to true for monitoring
+rpc_cors = "all"
+rpc_methods = "safe"
+
+[performance]
+max_runtime_instances = 8
+runtime_cache_size = 2
+db_cache = 1024
+state_cache_size = 67108864

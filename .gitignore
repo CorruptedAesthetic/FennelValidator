@@ -1,0 +1,48 @@
+# Fennel Validator - Files to ignore in version control
+
+# Downloaded binaries
+bin/fennel-node
+bin/fennel-node.exe
+bin/fennel-node.backup.*
+bin/README.md
+
+# Generated configuration
+config/validator.conf
+config/validator.conf.backup.*
+
+# Downloaded chainspecs (always downloaded fresh from main repo)
+config/staging-chainspec.json
+config/mainnet-chainspec.json
+config/staging-chainspec.json.tmp
+
+# Validator data directory (contains keys and blockchain data)
+data/
+*.tmp
+
+# Generated scripts
+validate.sh
+
+# Connection info cache
+network-info.tmp
+
+# Logs
+*.log
+
+# Backup files
+*.backup
+*.bak
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temporary files
+/tmp/
+temp/ 

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  fennel-validator:
+    image: ghcr.io/corruptedaesthetic/fennel-solonet:[1;33m⚠️  Could not fetch latest version, using fallback[0m
+v0.3.1
+    container_name: fennel-validator
+    ports:
+      - "9944:9944"   # RPC (local only)
+      - "9615:9615"   # Prometheus metrics
+      - "30333:30333" # P2P
+    volumes:
+      - validator_data:/data
+      - ../config:/config:ro
+    command: >
+      --chain /config/staging-chainspec.json
+      --validator
+      --name "External-Validator-Docker"
+      --base-path /data
+      --port 30333
+      --rpc-port 9944
+      --prometheus-port 9615
+      --rpc-external
+      --prometheus-external
+      --rpc-cors all
+      --rpc-methods safe
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "3"
+
+volumes:
+  validator_data:
