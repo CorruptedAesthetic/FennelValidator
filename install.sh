@@ -4,33 +4,26 @@
 
 set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+echo "🧪 Fennel External Validator Installer"
+echo "====================================="
+echo "Simple 3-step setup for staging network"
+echo
 
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
 VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
 
-echo -e "${BLUE}🧪 Fennel External Validator Installer${NC}"
-echo "====================================="
-echo -e "${GREEN}Simple 3-step setup for staging network${NC}"
-echo
-
 # Function to print status
 print_info() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo "✅ $1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo "⚠️  $1"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo "❌ $1"
 }
 
 # Detect platform
@@ -70,28 +63,43 @@ download_file() {
     local output="$2"
     local description="$3"
     
-    echo -e "${BLUE}⬇️  Downloading $description...${NC}"
+    echo "⬇️  Downloading $description..."
     if command -v curl > /dev/null; then
-        curl -L --progress-bar "$url" -o "$output" 2>/dev/null
+        if curl -L "$url" -o "$output" 2>/dev/null; then
+            print_info "$description downloaded successfully"
+            return 0
+        else
+            print_error "Failed to download $description from $url"
+            return 1
+        fi
     elif command -v wget > /dev/null; then
-        wget --progress=bar "$url" -O "$output" 2>/dev/null
+        if wget "$url" -O "$output" 2>/dev/null; then
+            print_info "$description downloaded successfully"
+            return 0
+        else
+            print_error "Failed to download $description from $url"
+            return 1
+        fi
     else
         print_error "Neither curl nor wget found. Please install one of them."
         exit 1
     fi
 }
 
-echo -e "\n${BLUE}🔍 Detecting system...${NC}"
+echo
+echo "🔍 Detecting system..."
 PLATFORM=$(detect_platform)
 VERSION=$(get_latest_version)
 print_info "Platform: $PLATFORM"
 print_info "Version: $VERSION"
 
-echo -e "\n${BLUE}📦 Creating directory structure...${NC}"
-mkdir -p bin scripts
+echo
+echo "📦 Creating directory structure..."
+mkdir -p bin scripts config
 print_info "Essential directories created"
 
-echo -e "\n${BLUE}⬇️  Downloading Fennel node binary...${NC}"
+echo
+echo "⬇️  Downloading Fennel node binary..."
 # Try to download from GitHub releases first
 BINARY_NAME="fennel-node"
 if [[ "$PLATFORM" == *"windows"* ]]; then
@@ -100,9 +108,10 @@ fi
 
 DOWNLOAD_URL="$RELEASES_URL/download/$VERSION/$BINARY_NAME"
 if curl -s --head "$DOWNLOAD_URL" 2>/dev/null | head -n 1 | grep -q "200 OK"; then
-    download_file "$DOWNLOAD_URL" "bin/fennel-node$ext" "Fennel node binary"
-    chmod +x "bin/fennel-node$ext"
-    print_info "Binary downloaded and made executable"
+    if download_file "$DOWNLOAD_URL" "bin/fennel-node$ext" "Fennel node binary"; then
+        chmod +x "bin/fennel-node$ext"
+        print_info "Binary ready for use"
+    fi
 else
     print_warning "Binary not available for $PLATFORM"
     echo "# Build from source" > bin/README.md
@@ -111,16 +120,21 @@ else
     print_info "Build instructions created in bin/README.md"
 fi
 
-echo -e "\n${BLUE}📜 Downloading validator scripts...${NC}"
+echo
+echo "📜 Downloading validator scripts..."
+
 # Download setup script
-download_file "$VALIDATOR_REPO_URL/setup-validator.sh" "setup-validator.sh" "Setup script"
-chmod +x setup-validator.sh
+if download_file "$VALIDATOR_REPO_URL/setup-validator.sh" "setup-validator.sh" "Setup script"; then
+    chmod +x setup-validator.sh
+fi
 
 # Download key generation script  
-download_file "$VALIDATOR_REPO_URL/scripts/generate-session-keys.sh" "scripts/generate-session-keys.sh" "Key generation script"
-chmod +x scripts/generate-session-keys.sh
+if download_file "$VALIDATOR_REPO_URL/scripts/generate-session-keys.sh" "scripts/generate-session-keys.sh" "Key generation script"; then
+    chmod +x scripts/generate-session-keys.sh
+fi
 
 # Create simple validate.sh script
+echo "📝 Creating validator management script..."
 cat > validate.sh << 'EOF'
 #!/bin/bash
 # Simple Validator Management Script
@@ -139,6 +153,12 @@ case "${1:-}" in
         else
             echo "❌ Configuration not found. Run ./setup-validator.sh first"
             exit 1
+        fi
+        
+        # Download chainspec if needed
+        if [ ! -f "config/staging-chainspec.json" ]; then
+            echo "📥 Downloading staging chainspec..."
+            curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json"
         fi
         
         # Start with basic config
@@ -167,7 +187,7 @@ case "${1:-}" in
                 echo "📊 Checking network connection..."
                 curl -s -H "Content-Type: application/json" \
                     -d '{"method":"system_health"}' \
-                    http://localhost:${RPC_PORT:-9944} | grep -o '"peers":[0-9]*' || echo "RPC not accessible"
+                    http://localhost:${RPC_PORT:-9944} 2>/dev/null | grep -o '"peers":[0-9]*' || echo "RPC not accessible"
             fi
         else
             echo "❌ Validator is not running"
@@ -205,18 +225,20 @@ EOF
 chmod +x validate.sh
 print_info "Validator management script created"
 
-echo -e "\n${BLUE}📋 Network Configuration${NC}"
+echo
+echo "📋 Network Configuration"
 print_info "Auto-connects to bootnode: /ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk"
-print_info "Chainspec auto-downloaded from fennel-solonet when needed"
+print_info "Chainspec auto-downloaded when needed"
 
-echo -e "\n${GREEN}🎉 Installation complete!${NC}"
 echo
-echo -e "${BLUE}Next steps (Simple 3-step process):${NC}"
-echo -e "1. Setup: ${GREEN}./setup-validator.sh${NC}"
-echo -e "2. Start: ${GREEN}./validate.sh start${NC}"  
-echo -e "3. Generate keys: ${GREEN}./scripts/generate-session-keys.sh${NC}"
+echo "🎉 Installation complete!"
 echo
-echo -e "${YELLOW}Then send us your session-keys.json file!${NC}"
+echo "Next steps (Simple 3-step process):"
+echo "1. Setup: ./setup-validator.sh"
+echo "2. Start: ./validate.sh start"  
+echo "3. Generate keys: ./scripts/generate-session-keys.sh"
+echo
+echo "Then send us your session-keys.json file!"
 echo
 echo "Repository: $REPO_URL"
 echo "Staging network - safe for learning!" 
