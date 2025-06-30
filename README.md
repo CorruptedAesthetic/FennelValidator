@@ -1,119 +1,96 @@
-# Fennel Validator - Staging
+# Fennel External Validator - Simple Setup
 
-**🧪 Learn Fennel validation in a safe, no-risk environment**
+**🧪 Join the Fennel staging network in 3 simple steps**
 
-Perfect for partners new to blockchain validation. Learn, experiment, and master validator operations without financial risk.
-
-## 🚀 Quick Start
-
-### Prerequisites
+## Prerequisites
 - Linux, macOS, or Windows
-- 2+ CPU cores, 4GB+ RAM, 50GB+ storage
-- Internet connection
+- 2+ CPU cores, 4GB+ RAM, 20GB+ storage
 
-### 🚀 **Quick Start (3 Commands)**
+## 🚀 Quick Setup (3 Steps)
 
+### Step 1: Download and Install
 ```bash
-# 1. Download and install
-curl -sSL https://raw.githubusercontent.com/CALLSHIFT/FennelValidatorStaging/main/install.sh | bash
+# Download installer
+curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/fennel-prod/main/FennelValidator/install.sh | bash
 
-# 2. Configure your validator (interactive setup)
+# Make scripts executable
+chmod +x *.sh scripts/*.sh
+```
+
+### Step 2: Setup and Start
+```bash
+# Configure your validator
 ./setup-validator.sh
 
-# 3. Start validating on staging network
+# Start validator (connects to network)
 ./validate.sh start
 ```
 
-**That's it!** You're now running a Fennel validator on the staging network.
+### Step 3: Generate Keys and Send Info
+```bash
+# Generate session keys
+./scripts/generate-session-keys.sh
 
-### 🎓 **After Mastering Staging**
+# This creates: session-keys.json with your validator info
+```
 
-Ready for production? Check out [FennelValidatorProduction](../FennelValidatorProduction/) *(under development)*
+**That's it!** Send us your `session-keys.json` file and we'll add you to the validator set.
 
-## 📋 What This Does
+## 📋 What to Send Us
 
-- ✅ Downloads the latest Fennel validator software
-- ✅ Auto-downloads latest chainspec from [fennel-solonet](https://github.com/CorruptedAesthetic/fennel-solonet)
-- ✅ Automatically configures network connection  
-- ✅ Generates secure validator keys
-- ✅ Sets up monitoring and health checks  
-- ✅ Starts your validator with optimal settings
+After Step 3, send us the contents of `session-keys.json`:
 
-## 🔧 Management Commands
+```json
+{
+    "session_keys": "0x...",
+    "aura_key": "0x...",
+    "grandpa_key": "0x...",
+    "validator_name": "Your-Validator-Name"
+}
+```
+
+## 🔧 Network Connection
+
+Your validator automatically connects to:
+- **Bootnode**: `/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk`
+- **Chainspec**: Auto-downloaded from fennel-solonet
+
+## ✅ Verify Setup
+
+Check your validator is working:
+```bash
+# Check status
+./validate.sh status
+# Should show: connected to network, syncing blocks
+
+# Check keys
+cat session-keys.json
+# Should show your generated keys
+```
+
+## 📞 Next Steps
+
+1. **Setup**: Complete the 3 steps above
+2. **Send**: Email/message us your `session-keys.json` content  
+3. **Wait**: We add you to validator set via Polkadot.js Apps
+4. **Validate**: You start producing blocks!
+
+## 🆘 Simple Commands
 
 ```bash
-# Check validator status
+# Check if running
 ./validate.sh status
-
-# Stop validator
-./validate.sh stop
-
-# Restart validator (auto-updates chainspec)
-./validate.sh restart
 
 # View logs
 ./validate.sh logs
 
-# Manually update chainspec from fennel-solonet
-./validate.sh update-chainspec
+# Restart if needed
+./validate.sh restart
 
-# Check network health
-./scripts/health-check.sh
-
-# Update to latest version
-./scripts/update-validator.sh
+# Stop validator
+./validate.sh stop
 ```
-
-## 🧪 **Staging Network Focus**
-
-This repository is **exclusively for staging validation**:
-
-- **✅ Perfect for Learning**: No financial risk, experiment freely
-- **✅ Real Network Experience**: Connect to actual staging blockchain
-- **✅ Full Feature Set**: All validator functionality without the stakes
-- **✅ Safe Environment**: Make mistakes, learn, and improve
-- **✅ Auto-Updates**: Automatically gets latest network configuration
-
-**🎯 Goals:**
-- Learn validator operations
-- Practice emergency procedures  
-- Test your infrastructure
-- Build confidence before production
-
-**🔄 Smart Update Behavior:**
-- **Staging**: Auto-updates chainspec for latest testing environment
-- **Production**: Would require manual coordination (see [FennelValidatorProduction](../FennelValidatorProduction/))
-
-## 📊 Monitoring
-
-Once running, you can monitor your validator:
-
-- **Status**: `./validate.sh status`
-- **Metrics**: `http://localhost:9615/metrics`
-- **RPC**: `http://localhost:9944` (local only)
-- **Logs**: `./validate.sh logs`
-
-## 🆘 Support
-
-- **📖 How Updates Work**: See [docs/simple-updates.md](docs/simple-updates.md) - **Start here!** Simple explanation of network updates
-- **Troubleshooting**: See [docs/troubleshooting.md](docs/troubleshooting.md) - Common issues and solutions  
-- **Security Guide**: See [docs/security-best-practices.md](docs/security-best-practices.md) - Security for staging
-- **Learning Exercises**: See [docs/learning-exercises.md](docs/learning-exercises.md) - Hands-on practice scenarios
-- **Learning Pathway**: See [STAGING_TO_PRODUCTION.md](STAGING_TO_PRODUCTION.md) - Complete learning guide
-- **Issues**: Create an issue in this repository for support
-
-## 🚀 Strategic Vision
-
-- **🗺️ Governance Roadmap**: See [GOVERNANCE_ROADMAP.md](GOVERNANCE_ROADMAP.md) - Evolution from centralized to decentralized network management
-
-## 🔒 Security
-
-This validator setup follows security best practices:
-- Keys are generated locally and never transmitted
-- Firewall rules are automatically configured
-- Read-only RPC access by default
-- Isolated data storage
 
 ---
 
-**Need help?** The setup process is interactive and will guide you through each step. If you encounter issues, check the troubleshooting guide or create an issue. 
+**🧪 Staging Network** - Safe for learning, no financial risk! 
