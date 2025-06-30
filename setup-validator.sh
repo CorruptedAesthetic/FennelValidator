@@ -582,14 +582,14 @@ main() {
     echo "• Prometheus port: $PROMETHEUS_PORT"
     echo
     echo "Next steps:"
-    echo "1. Start your validator: ${BLUE}./validate.sh start${NC}"
-    echo "2. Check status: ${BLUE}./validate.sh status${NC}"
-    echo "3. Generate session keys: ${BLUE}./scripts/generate-session-keys.sh${NC}"
+    echo -e "1. Start your validator: ${BLUE}./validate.sh start${NC}"
+    echo -e "2. Check status: ${BLUE}./validate.sh status${NC}"
+    echo -e "3. Generate session keys: ${BLUE}./scripts/generate-session-keys.sh${NC}"
     echo "4. Send us your session-keys.json file for network inclusion!"
     echo
     echo "Additional commands:"
-    echo "• View logs: ${BLUE}./validate.sh logs${NC}"
-    echo "• Stop validator: ${BLUE}./validate.sh stop${NC}"
+    echo -e "• View logs: ${BLUE}./validate.sh logs${NC}"
+    echo -e "• Stop validator: ${BLUE}./validate.sh stop${NC}"
     echo
     echo "Repository: $REPO_URL"
 }
