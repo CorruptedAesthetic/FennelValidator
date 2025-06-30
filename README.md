@@ -149,7 +149,9 @@ sudo systemctl start docker    # Linux
 
 - **Network**: Fennel Staging
 - **Consensus**: AURA + GRANDPA  
-- **Bootnode**: `/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk`
+- **Bootnodes**: Automatically discovered from chainspec
+  - `bootnode1.fennel.network:30333`
+  - `bootnode2.fennel.network:30333`
 - **Repository**: [fennel-solonet](https://github.com/CorruptedAesthetic/fennel-solonet)
 
 ---

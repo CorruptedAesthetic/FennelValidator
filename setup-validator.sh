@@ -444,10 +444,9 @@ initialize_validator() {
     INIT_CMD="$INIT_CMD --rpc-cors all"
     INIT_CMD="$INIT_CMD --rpc-methods safe"
     
-    # Always add staging bootnode for external validators
-    if [ "$NETWORK" = "staging" ]; then
-        INIT_CMD="$INIT_CMD --bootnodes \"/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk\""
-    elif [ -n "$BOOTNODE" ]; then
+    # Only use custom bootnode if explicitly configured
+    # Let chainspec handle bootnode discovery by default
+    if [ -n "$BOOTNODE" ]; then
         INIT_CMD="$INIT_CMD --bootnodes \"$BOOTNODE\""
     fi
     
@@ -512,10 +511,9 @@ build_command() {
     CMD="$CMD --rpc-cors all"
     CMD="$CMD --rpc-methods safe"
     
-    # Always add staging bootnode for external validators
-    if [ "$NETWORK" = "staging" ]; then
-        CMD="$CMD --bootnodes \"/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk\""
-    elif [ -n "$BOOTNODE" ]; then
+    # Only use custom bootnode if explicitly configured
+    # Let chainspec handle bootnode discovery by default
+    if [ -n "$BOOTNODE" ]; then
         CMD="$CMD --bootnodes \"$BOOTNODE\""
     fi
     
