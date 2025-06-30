@@ -68,6 +68,31 @@ The installer tries multiple methods to get the `fennel-node` binary:
 
 ## 🆘 Troubleshooting
 
+### P2P Port Configuration
+When asked for P2P port during setup:
+
+**Default (Recommended): 30333**
+- Press Enter to accept default
+- Standard blockchain P2P port
+- Usually available on most systems
+
+**When to use different port:**
+- Port 30333 is already in use
+- Running multiple validators on same machine
+- Corporate firewall blocks standard ports
+- Personal security preference
+
+**Common alternatives:** 30334, 30335, 30336
+**Avoid these ports:** 9944 (RPC), 8080 (web), 22 (SSH)
+
+**Firewall setup:**
+```bash
+# Allow your chosen P2P port
+sudo ufw allow 30333/tcp
+# Check port availability  
+netstat -ln | grep :30333
+```
+
 ### Binary Not Found Error
 ```
 ❌ Fennel node binary not found!

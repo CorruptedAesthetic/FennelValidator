@@ -86,9 +86,15 @@ configure_validator() {
     echo
     
     # Validator name
+    echo "ℹ️  Validator Name: How your validator appears on the network"
+    echo "   • Default includes your hostname (press Enter to accept)"
+    echo "   • Make it unique and identifiable (avoid special characters)"
+    echo "   • Examples: 'MyCompany-Validator', 'Alice-Staging', 'University-Node'"
+    echo "   • This name will be visible to other validators and in blockchain explorers"
+    echo
     default_name="External-Validator-$(hostname)"
     print_question "What should we call your validator?"
-    VALIDATOR_NAME=$(get_input "Validator name" "$default_name")
+    VALIDATOR_NAME=$(get_input "Validator name (press Enter for $default_name)" "$default_name")
     
     # Network selection (staging only)
     echo
@@ -113,29 +119,49 @@ configure_validator() {
     # Port configuration
     echo
     print_question "Network port configuration:"
+    echo
+    echo "ℹ️  P2P Port: This is the port other validators use to connect to you"
+    echo "   • Default 30333 works for 99% of cases (press Enter to accept)"
+    echo "   • Only change if: port conflict, multiple validators, or firewall issues"
+    echo "   • Common alternatives: 30334, 30335, 30336"
+    echo
     
-    P2P_PORT=$(get_input "P2P port" "30333")
+    P2P_PORT=$(get_input "P2P port (press Enter for 30333)" "30333")
     while ! validate_port "$P2P_PORT"; do
         print_warning "Invalid port. Please enter a port between 1024-65535"
-        P2P_PORT=$(get_input "P2P port" "30333")
+        P2P_PORT=$(get_input "P2P port (press Enter for 30333)" "30333")
     done
     
-    RPC_PORT=$(get_input "RPC port" "9944")
+    echo "ℹ️  RPC Port: For local tools to connect to your validator (Polkadot.js, etc.)"
+    echo "   • Default 9944 is standard (press Enter to accept)"
+    echo "   • Keep default unless you have specific requirements"
+    echo
+    RPC_PORT=$(get_input "RPC port (press Enter for 9944)" "9944")
     while ! validate_port "$RPC_PORT"; do
         print_warning "Invalid port. Please enter a port between 1024-65535"
-        RPC_PORT=$(get_input "RPC port" "9944")
+        RPC_PORT=$(get_input "RPC port (press Enter for 9944)" "9944")
     done
     
-    PROMETHEUS_PORT=$(get_input "Prometheus metrics port" "9615")
+    echo "ℹ️  Prometheus Port: For monitoring and metrics collection"
+    echo "   • Default 9615 is standard (press Enter to accept)"
+    echo "   • Used by monitoring tools like Grafana"
+    echo
+    PROMETHEUS_PORT=$(get_input "Prometheus port (press Enter for 9615)" "9615")
     while ! validate_port "$PROMETHEUS_PORT"; do
         print_warning "Invalid port. Please enter a port between 1024-65535"
-        PROMETHEUS_PORT=$(get_input "Prometheus metrics port" "9615")
+        PROMETHEUS_PORT=$(get_input "Prometheus port (press Enter for 9615)" "9615")
     done
     
     # Data directory
     echo
+    echo "ℹ️  Data Directory: Where your validator stores blockchain data and keys"
+    echo "   • Default './data' works for most cases (press Enter to accept)"
+    echo "   • Staging network: ~2-5GB storage needed"
+    echo "   • Consider external drive for: production, limited disk space, or faster SSD"
+    echo "   • Examples: './data', '/mnt/validator-data', '/opt/fennel/data'"
+    echo
     DEFAULT_DATA_DIR="./data"
-    DATA_DIR=$(get_input "Data directory" "$DEFAULT_DATA_DIR")
+    DATA_DIR=$(get_input "Data directory (press Enter for ./data)" "$DEFAULT_DATA_DIR")
     
     # Create data directory
     mkdir -p "$DATA_DIR"
@@ -143,8 +169,13 @@ configure_validator() {
     
     # Advanced options
     echo
+    echo "ℹ️  Advanced Options: External RPC access, monitoring, and debug settings"
+    echo "   • Most validators: Press Enter (no) - defaults work great for staging"
+    echo "   • Only enable if you need: external monitoring tools, debug logging, or RPC access"
+    echo "   • You can always re-run setup later to change these"
+    echo
     print_question "Would you like to configure advanced options? (y/n)"
-    advanced_config=$(get_input "" "n")
+    advanced_config=$(get_input "Configure advanced options (press Enter for no)" "n")
     
     if [[ "$advanced_config" =~ ^[Yy] ]]; then
         configure_advanced
@@ -535,7 +566,6 @@ EOF
 main() {
     check_prerequisites
     configure_validator
-    generate_keys
     discover_network
     save_config
     generate_startup_script
@@ -554,11 +584,14 @@ main() {
     echo "Next steps:"
     echo "1. Start your validator: ${BLUE}./validate.sh start${NC}"
     echo "2. Check status: ${BLUE}./validate.sh status${NC}"
-    echo "3. View logs: ${BLUE}./validate.sh logs${NC}"
+    echo "3. Generate session keys: ${BLUE}./scripts/generate-session-keys.sh${NC}"
+    echo "4. Send us your session-keys.json file for network inclusion!"
+    echo
+    echo "Additional commands:"
+    echo "• View logs: ${BLUE}./validate.sh logs${NC}"
+    echo "• Stop validator: ${BLUE}./validate.sh stop${NC}"
     echo
     echo "Repository: $REPO_URL"
-    echo
-    print_warning "Remember to keep your seed phrase safe!"
 }
 
 # Run main function
