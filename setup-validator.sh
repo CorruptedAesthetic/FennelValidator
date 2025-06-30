@@ -437,7 +437,7 @@ build_command() {
     CMD="$CMD --max-runtime-instances 8"
     CMD="$CMD --runtime-cache-size 2"
     CMD="$CMD --db-cache 1024"
-    CMD="$CMD --state-cache-size 67108864"
+    CMD="$CMD --trie-cache-size 67108864"
     CMD="$CMD --enable-offchain-indexing"
     CMD="$CMD --offchain-worker always"
     
