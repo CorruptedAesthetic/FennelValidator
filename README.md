@@ -14,6 +14,7 @@ Join the Fennel blockchain network as an external validator in **3 simple steps*
 #### Step 1: Download and Install
 ```bash
 curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main/install.sh | bash
+cd FennelValidator
 ```
 
 The installer will:
@@ -22,15 +23,18 @@ The installer will:
 - 📝 Create build instructions as fallback
 - 🔧 Set up directory structure and configuration
 
-#### Step 2: Setup and Start
+#### Step 2: Setup and Initialize
 ```bash
 ./setup-validator.sh    # Configure your validator
-./validate.sh start     # Start validating!
+./validate.sh init      # Initialize and generate network keys
 ```
 
-#### Step 3: Generate Session Keys
+**Important**: Run `init` first to generate network keys before starting!
+
+#### Step 3: Start and Generate Session Keys
 ```bash
-./scripts/generate-session-keys.sh
+./validate.sh start     # Start validating!
+./scripts/generate-session-keys.sh    # Generate session keys
 ```
 
 **Then send us your `session-keys.json` file!**
@@ -57,12 +61,19 @@ The installer tries multiple methods to get the `fennel-node` binary:
 ## 🛠️ Management Commands
 
 ```bash
+./validate.sh init      # Initialize validator (generate network keys) - Run this first!
 ./validate.sh start     # Start validator
 ./validate.sh stop      # Stop validator  
 ./validate.sh status    # Check status
 ./validate.sh restart   # Restart validator
 ./validate.sh logs      # View logs
 ```
+
+**First Time Setup Workflow:**
+1. `./setup-validator.sh` - Configure your validator
+2. `./validate.sh init` - Generate network keys 
+3. `./validate.sh start` - Start validating
+4. `./scripts/generate-session-keys.sh` - Generate session keys
 
 ---
 
@@ -103,6 +114,19 @@ Please run: ./install.sh first
 1. **Install Docker**: `sudo apt install docker.io` (Ubuntu) or install Docker Desktop
 2. **Re-run installer**: The installer will detect Docker and extract the binary
 3. **Build from source**: Follow instructions in `bin/README.md`
+
+### Network Key Error
+```
+Error: NetworkKeyNotFound("./data/chains/custom/network/secret_ed25519")
+```
+
+**Solution:** Initialize the validator first:
+```bash
+./validate.sh init      # Generate network keys first
+./validate.sh start     # Then start the validator
+```
+
+This generates the P2P network identity keys that your validator needs to connect to the network.
 
 ### Docker Not Running
 ```
