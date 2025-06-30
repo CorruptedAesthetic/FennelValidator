@@ -323,6 +323,18 @@ chmod +x validate.sh
 print_info "Validator management script created"
 
 echo
+echo "🧪 Testing binary compatibility..."
+if [ -f "bin/fennel-node" ]; then
+    if ./bin/fennel-node --help > /dev/null 2>&1; then
+        print_info "Binary compatibility test passed"
+    else
+        print_warning "Binary may have compatibility issues - check ./validate.sh command for help"
+    fi
+else
+    print_info "Binary will be tested when validator starts"
+fi
+
+echo
 echo "📋 Network Configuration"
 print_info "Auto-connects to bootnode: /ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk"
 print_info "Chainspec auto-downloaded when needed"

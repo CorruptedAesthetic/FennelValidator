@@ -429,17 +429,15 @@ build_command() {
     CMD="$CMD --rpc-cors all"
     CMD="$CMD --rpc-methods safe"
     
-    if [ -n "$BOOTNODE" ]; then
+    # Always add staging bootnode for external validators
+    if [ "$NETWORK" = "staging" ]; then
+        CMD="$CMD --bootnodes \"/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk\""
+    elif [ -n "$BOOTNODE" ]; then
         CMD="$CMD --bootnodes \"$BOOTNODE\""
     fi
     
-    # Performance optimizations
-    CMD="$CMD --max-runtime-instances 8"
-    CMD="$CMD --runtime-cache-size 2"
+    # Performance optimizations (conservative settings for compatibility)
     CMD="$CMD --db-cache 1024"
-    CMD="$CMD --trie-cache-size 67108864"
-    CMD="$CMD --enable-offchain-indexing true"
-    CMD="$CMD --offchain-worker always"
     
     echo "$CMD"
 }
