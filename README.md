@@ -14,7 +14,6 @@ Join the Fennel blockchain network as an external validator in **3 simple steps*
 #### Step 1: Download and Install
 ```bash
 curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main/install.sh | bash
-cd FennelValidator
 ```
 
 The installer will:
