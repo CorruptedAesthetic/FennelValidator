@@ -438,7 +438,7 @@ build_command() {
     CMD="$CMD --runtime-cache-size 2"
     CMD="$CMD --db-cache 1024"
     CMD="$CMD --trie-cache-size 67108864"
-    CMD="$CMD --enable-offchain-indexing"
+    CMD="$CMD --enable-offchain-indexing true"
     CMD="$CMD --offchain-worker always"
     
     echo "$CMD"
