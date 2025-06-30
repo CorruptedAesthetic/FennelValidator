@@ -201,6 +201,15 @@ if [ "$BINARY_DOWNLOADED" = false ]; then
 fi
 
 echo
+echo "📥 Downloading staging chainspec..."
+CHAINSPEC_URL="https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json"
+if download_file "$CHAINSPEC_URL" "config/staging-chainspec.json" "Staging chainspec"; then
+    print_info "Staging chainspec ready for use"
+else
+    print_warning "Chainspec download failed - will retry when starting validator"
+fi
+
+echo
 echo "📜 Downloading validator scripts..."
 
 # Download setup script
@@ -245,6 +254,8 @@ case "${1:-}" in
         if [ ! -f "config/staging-chainspec.json" ]; then
             echo "📥 Downloading staging chainspec..."
             curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json"
+        else
+            echo "✅ Using existing staging chainspec"
         fi
         
         # Start with basic config
