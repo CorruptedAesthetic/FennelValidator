@@ -12,6 +12,7 @@ echo
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
 VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
+DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-e73e4002862328f70a46ee64d8fd681d5ebccdd5"
 
 # Function to print status
 print_info() {
@@ -24,6 +25,60 @@ print_warning() {
 
 print_error() {
     echo "❌ $1"
+}
+
+# Check if Docker is available
+check_docker() {
+    if command -v docker >/dev/null 2>&1; then
+        if docker info >/dev/null 2>&1; then
+            return 0
+        else
+            print_warning "Docker is installed but not running"
+            return 1
+        fi
+    else
+        print_warning "Docker is not installed"
+        return 1
+    fi
+}
+
+# Extract binary from Docker image
+extract_binary_from_docker() {
+    echo "🐳 Extracting fennel-node binary from Docker image..."
+    
+    # Create temporary container and copy binary
+    CONTAINER_ID=$(docker create "$DOCKER_IMAGE" 2>/dev/null)
+    if [ $? -eq 0 ]; then
+        # Try common binary locations
+        for path in "/usr/local/bin/fennel-node" "/usr/bin/fennel-node" "/fennel-node"; do
+            if docker cp "$CONTAINER_ID:$path" "bin/fennel-node" 2>/dev/null; then
+                docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                chmod +x "bin/fennel-node"
+                print_info "Binary extracted from Docker image and ready for use"
+                return 0
+            fi
+        done
+        
+        # If direct paths don't work, find the binary
+        docker cp "$CONTAINER_ID:/" "temp_extract" 2>/dev/null
+        if [ -d "temp_extract" ]; then
+            BINARY_PATH=$(find temp_extract -name "fennel-node" -type f 2>/dev/null | head -1)
+            if [ -n "$BINARY_PATH" ]; then
+                cp "$BINARY_PATH" "bin/fennel-node"
+                chmod +x "bin/fennel-node"
+                rm -rf temp_extract
+                docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                print_info "Binary found and extracted successfully"
+                return 0
+            fi
+            rm -rf temp_extract
+        fi
+        
+        docker rm "$CONTAINER_ID" >/dev/null 2>&1
+    fi
+    
+    print_error "Failed to extract binary from Docker image"
+    return 1
 }
 
 # Detect platform
@@ -107,16 +162,41 @@ if [[ "$PLATFORM" == *"windows"* ]]; then
 fi
 
 DOWNLOAD_URL="$RELEASES_URL/download/$VERSION/$BINARY_NAME"
+BINARY_DOWNLOADED=false
+
 if curl -s --head "$DOWNLOAD_URL" 2>/dev/null | head -n 1 | grep -q "200 OK"; then
     if download_file "$DOWNLOAD_URL" "bin/fennel-node$ext" "Fennel node binary"; then
         chmod +x "bin/fennel-node$ext"
         print_info "Binary ready for use"
+        BINARY_DOWNLOADED=true
     fi
-else
-    print_warning "Binary not available for $PLATFORM"
+fi
+
+# If binary download failed, try Docker extraction
+if [ "$BINARY_DOWNLOADED" = false ]; then
+    print_warning "Pre-built binary not available for $PLATFORM"
+    
+    if check_docker; then
+        echo "🐳 Attempting to extract binary from Docker image..."
+        if extract_binary_from_docker; then
+            BINARY_DOWNLOADED=true
+        fi
+    fi
+fi
+
+# If both methods failed, provide build instructions
+if [ "$BINARY_DOWNLOADED" = false ]; then
+    echo "📝 Creating build instructions..."
     echo "# Build from source" > bin/README.md
-    echo "Run: cargo build --release in the fennel-solonet repository" >> bin/README.md
-    echo "Then copy target/release/fennel-node to this bin/ directory" >> bin/README.md
+    echo "Requirements: Rust toolchain (https://rustup.rs/)" >> bin/README.md
+    echo "" >> bin/README.md
+    echo "Steps:" >> bin/README.md
+    echo "1. git clone $REPO_URL" >> bin/README.md
+    echo "2. cd fennel-solonet" >> bin/README.md
+    echo "3. cargo build --release" >> bin/README.md
+    echo "4. cp target/release/fennel-node ../bin/" >> bin/README.md
+    echo "" >> bin/README.md
+    echo "Alternative: Install Docker and re-run this installer" >> bin/README.md
     print_info "Build instructions created in bin/README.md"
 fi
 
@@ -152,6 +232,12 @@ case "${1:-}" in
             source "$CONFIG_FILE"
         else
             echo "❌ Configuration not found. Run ./setup-validator.sh first"
+            exit 1
+        fi
+        
+        if [ ! -f "$BINARY" ]; then
+            echo "❌ Fennel node binary not found!"
+            echo "   Run: ./install.sh first"
             exit 1
         fi
         

@@ -1,93 +1,110 @@
-# Fennel External Validator - Simple Setup
+# Fennel External Validator
 
-**🧪 Join the Fennel staging network in 3 simple steps**
+Join the Fennel blockchain network as an external validator in **3 simple steps**!
 
-## Prerequisites
+## 🚀 Quick Start
+
+### Prerequisites
+- **Docker** (recommended) - for automatic binary extraction
+- OR **Rust toolchain** - for building from source
 - Linux, macOS, or Windows
-- 2+ CPU cores, 4GB+ RAM, 20GB+ storage
 
-## 🚀 Quick Setup (3 Steps)
+### Simple 3-Step Process
 
-### Step 1: Download and Install
+#### Step 1: Download and Install
 ```bash
-# Download installer
 curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main/install.sh | bash
 ```
 
-### Step 2: Setup and Start
-```bash
-# Configure your validator
-./setup-validator.sh
+The installer will:
+- ✅ Download validator scripts and management tools
+- 🐳 Extract the `fennel-node` binary from Docker image (if Docker available)
+- 📝 Create build instructions as fallback
+- 🔧 Set up directory structure and configuration
 
-# Start validator (connects to network)
-./validate.sh start
+#### Step 2: Setup and Start
+```bash
+./setup-validator.sh    # Configure your validator
+./validate.sh start     # Start validating!
 ```
 
-### Step 3: Generate Keys and Send Info
+#### Step 3: Generate Session Keys
 ```bash
-# Generate session keys
 ./scripts/generate-session-keys.sh
-
-# This creates: session-keys.json with your validator info
 ```
 
-**That's it!** Send us your `session-keys.json` file and we'll add you to the validator set.
+**Then send us your `session-keys.json` file!**
 
-## 📋 What to Send Us
+---
 
-After Step 3, send us the contents of `session-keys.json`:
+## 📋 What Happens During Installation
 
-```json
-{
-    "session_keys": "0x...",
-    "aura_key": "0x...",
-    "grandpa_key": "0x...",
-    "validator_name": "Your-Validator-Name"
-}
-```
+### Binary Acquisition
+The installer tries multiple methods to get the `fennel-node` binary:
 
-## 🔧 Network Connection
+1. **GitHub Releases** (if pre-built binary available)
+2. **Docker Extraction** (automatic if Docker is running)
+   - Uses: `ghcr.io/corruptedaesthetic/fennel-solonet:sha-e73e4002862328f70a46ee64d8fd681d5ebccdd5`
+3. **Build Instructions** (fallback for source compilation)
 
-Your validator automatically connects to:
-- **Bootnode**: `/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk`
-- **Chainspec**: Auto-downloaded from fennel-solonet
+### Network Configuration  
+- **Auto-connects** to staging bootnode: `/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk`
+- **Chainspec** auto-downloaded when starting validator
+- **Staging network** - safe for learning and testing
 
-## ✅ Verify Setup
+---
 
-Check your validator is working:
-```bash
-# Check status
-./validate.sh status
-# Should show: connected to network, syncing blocks
-
-# Check keys
-cat session-keys.json
-# Should show your generated keys
-```
-
-## 📞 Next Steps
-
-1. **Setup**: Complete the 3 steps above
-2. **Send**: Email/message us your `session-keys.json` content  
-3. **Wait**: We add you to validator set via Polkadot.js Apps
-4. **Validate**: You start producing blocks!
-
-## 🆘 Simple Commands
+## 🛠️ Management Commands
 
 ```bash
-# Check if running
-./validate.sh status
-
-# View logs
-./validate.sh logs
-
-# Restart if needed
-./validate.sh restart
-
-# Stop validator
-./validate.sh stop
+./validate.sh start     # Start validator
+./validate.sh stop      # Stop validator  
+./validate.sh status    # Check status
+./validate.sh restart   # Restart validator
+./validate.sh logs      # View logs
 ```
 
 ---
 
-**🧪 Staging Network** - Safe for learning, no financial risk! 
+## 🆘 Troubleshooting
+
+### Binary Not Found Error
+```
+❌ Fennel node binary not found!
+Please run: ./install.sh first
+```
+
+**Solutions:**
+1. **Install Docker**: `sudo apt install docker.io` (Ubuntu) or install Docker Desktop
+2. **Re-run installer**: The installer will detect Docker and extract the binary
+3. **Build from source**: Follow instructions in `bin/README.md`
+
+### Docker Not Running
+```
+⚠️ Docker is installed but not running
+```
+
+**Solution:** Start Docker service:
+```bash
+sudo systemctl start docker    # Linux
+# OR start Docker Desktop       # Windows/Mac
+```
+
+### Connection Issues
+- Ensure firewall allows P2P port (default: 30333)
+- Check network connectivity to bootnode IP: 192.168.49.2:30604
+
+---
+
+## 🌐 Network Information
+
+- **Network**: Fennel Staging
+- **Consensus**: AURA + GRANDPA  
+- **Bootnode**: `/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk`
+- **Repository**: [fennel-solonet](https://github.com/CorruptedAesthetic/fennel-solonet)
+
+---
+
+**🧪 Staging Environment - Perfect for Learning!**
+
+*Need help? Open an issue or contact the Fennel team.* 
