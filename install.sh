@@ -1,6 +1,6 @@
 #!/bin/bash
-# Fennel Validator Installer
-# Downloads and sets up everything needed to run a Fennel validator
+# Fennel Validator Installer - Simple 3-Step Setup
+# Downloads and sets up everything needed for external validators
 
 set -e
 
@@ -13,11 +13,10 @@ NC='\033[0m' # No Color
 
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
-RAW_URL="https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main"
 
-echo -e "${BLUE}🧪 Fennel Staging Validator Installer${NC}"
-echo "============================================"
-echo -e "${GREEN}Safe learning environment - no financial risk!${NC}"
+echo -e "${BLUE}🧪 Fennel External Validator Installer${NC}"
+echo "====================================="
+echo -e "${GREEN}Simple 3-step setup for staging network${NC}"
 echo
 
 # Function to print status
@@ -56,9 +55,8 @@ detect_platform() {
 
 # Get latest release version
 get_latest_version() {
-    local version=$(curl -s "$RELEASES_URL/latest" | grep -o 'tag/[^"]*' | cut -d'/' -f2 | head -1)
+    local version=$(curl -s "$RELEASES_URL/latest" 2>/dev/null | grep -o 'tag/[^"]*' | cut -d'/' -f2 | head -1 2>/dev/null)
     if [ -z "$version" ]; then
-        print_warning "Could not fetch latest version, using fallback"
         echo "v0.3.1"  # Fallback to known version
     else
         echo "$version"
@@ -73,9 +71,9 @@ download_file() {
     
     echo -e "${BLUE}⬇️  Downloading $description...${NC}"
     if command -v curl > /dev/null; then
-        curl -L --progress-bar "$url" -o "$output"
+        curl -L --progress-bar "$url" -o "$output" 2>/dev/null
     elif command -v wget > /dev/null; then
-        wget --progress=bar "$url" -O "$output"
+        wget --progress=bar "$url" -O "$output" 2>/dev/null
     else
         print_error "Neither curl nor wget found. Please install one of them."
         exit 1
@@ -86,11 +84,11 @@ echo -e "\n${BLUE}🔍 Detecting system...${NC}"
 PLATFORM=$(detect_platform)
 VERSION=$(get_latest_version)
 print_info "Platform: $PLATFORM"
-print_info "Latest version: $VERSION"
+print_info "Version: $VERSION"
 
 echo -e "\n${BLUE}📦 Creating directory structure...${NC}"
-mkdir -p bin config scripts docker docs
-print_info "Directories created"
+mkdir -p bin scripts
+print_info "Essential directories created"
 
 echo -e "\n${BLUE}⬇️  Downloading Fennel node binary...${NC}"
 # Try to download from GitHub releases first
@@ -100,107 +98,30 @@ if [[ "$PLATFORM" == *"windows"* ]]; then
 fi
 
 DOWNLOAD_URL="$RELEASES_URL/download/$VERSION/$BINARY_NAME"
-if curl -s --head "$DOWNLOAD_URL" | head -n 1 | grep -q "200 OK"; then
+if curl -s --head "$DOWNLOAD_URL" 2>/dev/null | head -n 1 | grep -q "200 OK"; then
     download_file "$DOWNLOAD_URL" "bin/fennel-node$ext" "Fennel node binary"
+    chmod +x "bin/fennel-node$ext"
+    print_info "Binary downloaded and made executable"
 else
-    print_warning "Binary not available for $PLATFORM, will build from source"
+    print_warning "Binary not available for $PLATFORM"
     echo "# Build from source" > bin/README.md
     echo "Run: cargo build --release in the fennel-solonet repository" >> bin/README.md
     echo "Then copy target/release/fennel-node to this bin/ directory" >> bin/README.md
+    print_info "Build instructions created in bin/README.md"
 fi
 
-if [ -f "bin/fennel-node$ext" ]; then
-    chmod +x "bin/fennel-node$ext"
-    print_info "Binary downloaded and made executable"
-fi
-
-echo -e "\n${BLUE}📋 Chainspec Configuration${NC}"
-print_info "Chainspecs will be auto-downloaded from fennel-solonet when needed"
-print_info "This ensures you always have the latest network configuration"
-
-echo -e "\n${BLUE}📜 Downloading helper scripts...${NC}"
-# Download the connection info script
-download_file "$RAW_URL/../fennel-prod/scripts/staging/get-external-validator-info.sh" "scripts/get-connection-info.sh" "Connection info script"
-chmod +x scripts/get-connection-info.sh
-
-echo -e "\n${BLUE}📝 Creating configuration template...${NC}"
-cat > config/validator-config.toml << 'EOF'
-# Fennel Validator Configuration
-
-[validator]
-name = "External-Validator-{HOSTNAME}"
-network = "staging"  # Options: staging, mainnet
-data_dir = "./data"
-
-[network]
-port = 30333
-rpc_port = 9944
-prometheus_port = 9615
-
-[security]
-rpc_external = false  # Set to true only if needed
-prometheus_external = false  # Set to true for monitoring
-rpc_cors = "all"
-rpc_methods = "safe"
-
-[performance]
-max_runtime_instances = 8
-runtime_cache_size = 2
-db_cache = 1024
-state_cache_size = 67108864
-EOF
-
-print_info "Configuration template created"
-
-echo -e "\n${BLUE}🐳 Creating Docker setup...${NC}"
-cat > docker/docker-compose.yml << EOF
-version: '3.8'
-
-services:
-  fennel-validator:
-    image: ghcr.io/corruptedaesthetic/fennel-solonet:$VERSION
-    container_name: fennel-validator
-    ports:
-      - "9944:9944"   # RPC (local only)
-      - "9615:9615"   # Prometheus metrics
-      - "30333:30333" # P2P
-    volumes:
-      - validator_data:/data
-      - ../config:/config:ro
-    command: >
-      --chain /config/staging-chainspec.json
-      --validator
-      --name "External-Validator-Docker"
-      --base-path /data
-      --port 30333
-      --rpc-port 9944
-      --prometheus-port 9615
-      --rpc-external
-      --prometheus-external
-      --rpc-cors all
-      --rpc-methods safe
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
-        max-file: "3"
-
-volumes:
-  validator_data:
-EOF
-
-print_info "Docker Compose configuration created"
+echo -e "\n${BLUE}📋 Network Configuration${NC}"
+print_info "Auto-connects to bootnode: /ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk"
+print_info "Chainspec auto-downloaded from fennel-solonet when needed"
 
 echo -e "\n${GREEN}🎉 Installation complete!${NC}"
 echo
-echo "Next steps:"
-echo "1. Run setup: ${BLUE}./setup-validator.sh${NC}"
-echo "2. Start validator: ${BLUE}./validate.sh start${NC}"
+echo -e "${BLUE}Next steps (Simple 3-step process):${NC}"
+echo "1. Setup: ${GREEN}./setup-validator.sh${NC}"
+echo "2. Start: ${GREEN}./validate.sh start${NC}"  
+echo "3. Generate keys: ${GREEN}./scripts/generate-session-keys.sh${NC}"
 echo
-echo "For Docker users:"
-echo "1. Configure: Edit config/validator-config.toml"
-echo "2. Start: ${BLUE}cd docker && docker-compose up -d${NC}"
+echo -e "${YELLOW}Then send us your session-keys.json file!${NC}"
 echo
 echo "Repository: $REPO_URL"
-echo "Version: $VERSION" 
+echo "Staging network - safe for learning!" 
