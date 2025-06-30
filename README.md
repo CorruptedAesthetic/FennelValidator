@@ -12,9 +12,6 @@
 ```bash
 # Download installer
 curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main/install.sh | bash
-
-# Make scripts executable
-chmod +x *.sh scripts/*.sh
 ```
 
 ### Step 2: Setup and Start

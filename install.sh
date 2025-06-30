@@ -13,6 +13,7 @@ NC='\033[0m' # No Color
 
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
+VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
 
 echo -e "${BLUE}🧪 Fennel External Validator Installer${NC}"
 echo "====================================="
@@ -110,6 +111,100 @@ else
     print_info "Build instructions created in bin/README.md"
 fi
 
+echo -e "\n${BLUE}📜 Downloading validator scripts...${NC}"
+# Download setup script
+download_file "$VALIDATOR_REPO_URL/setup-validator.sh" "setup-validator.sh" "Setup script"
+chmod +x setup-validator.sh
+
+# Download key generation script  
+download_file "$VALIDATOR_REPO_URL/scripts/generate-session-keys.sh" "scripts/generate-session-keys.sh" "Key generation script"
+chmod +x scripts/generate-session-keys.sh
+
+# Create simple validate.sh script
+cat > validate.sh << 'EOF'
+#!/bin/bash
+# Simple Validator Management Script
+
+CONFIG_FILE="config/validator.conf"
+BINARY="bin/fennel-node"
+if [ -f "bin/fennel-node.exe" ]; then
+    BINARY="bin/fennel-node.exe"
+fi
+
+case "${1:-}" in
+    start)
+        echo "🚀 Starting validator..."
+        if [ -f "$CONFIG_FILE" ]; then
+            source "$CONFIG_FILE"
+        else
+            echo "❌ Configuration not found. Run ./setup-validator.sh first"
+            exit 1
+        fi
+        
+        # Start with basic config
+        ./$BINARY \
+            --chain "config/staging-chainspec.json" \
+            --validator \
+            --name "${VALIDATOR_NAME:-External-Validator}" \
+            --base-path "${DATA_DIR:-./data}" \
+            --port "${P2P_PORT:-30333}" \
+            --rpc-port "${RPC_PORT:-9944}" \
+            --prometheus-port "${PROMETHEUS_PORT:-9615}" \
+            --bootnodes="/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk" \
+            --rpc-cors all \
+            --rpc-methods safe
+        ;;
+    
+    stop)
+        echo "🛑 Stopping validator..."
+        pkill -f "fennel-node.*--validator" || echo "Validator was not running"
+        ;;
+    
+    status)
+        if pgrep -f "fennel-node.*--validator" > /dev/null; then
+            echo "✅ Validator is running"
+            if command -v curl >/dev/null 2>&1; then
+                echo "📊 Checking network connection..."
+                curl -s -H "Content-Type: application/json" \
+                    -d '{"method":"system_health"}' \
+                    http://localhost:${RPC_PORT:-9944} | grep -o '"peers":[0-9]*' || echo "RPC not accessible"
+            fi
+        else
+            echo "❌ Validator is not running"
+        fi
+        ;;
+    
+    restart)
+        $0 stop
+        sleep 2
+        $0 start
+        ;;
+    
+    logs)
+        echo "📋 Validator logs (Ctrl+C to stop):"
+        if [ -d "${DATA_DIR:-./data}" ]; then
+            tail -f "${DATA_DIR:-./data}/chains/*/network.log" 2>/dev/null || echo "No logs found yet"
+        else
+            echo "No data directory found. Start validator first."
+        fi
+        ;;
+    
+    *)
+        echo "Usage: $0 {start|stop|status|restart|logs}"
+        echo
+        echo "Commands:"
+        echo "  start   - Start the validator"
+        echo "  stop    - Stop the validator" 
+        echo "  status  - Check if validator is running"
+        echo "  restart - Restart the validator"
+        echo "  logs    - View validator logs"
+        ;;
+esac
+EOF
+
+chmod +x validate.sh
+print_info "Validator management script created"
+
 echo -e "\n${BLUE}📋 Network Configuration${NC}"
 print_info "Auto-connects to bootnode: /ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk"
 print_info "Chainspec auto-downloaded from fennel-solonet when needed"
@@ -117,9 +212,9 @@ print_info "Chainspec auto-downloaded from fennel-solonet when needed"
 echo -e "\n${GREEN}🎉 Installation complete!${NC}"
 echo
 echo -e "${BLUE}Next steps (Simple 3-step process):${NC}"
-echo "1. Setup: ${GREEN}./setup-validator.sh${NC}"
-echo "2. Start: ${GREEN}./validate.sh start${NC}"  
-echo "3. Generate keys: ${GREEN}./scripts/generate-session-keys.sh${NC}"
+echo -e "1. Setup: ${GREEN}./setup-validator.sh${NC}"
+echo -e "2. Start: ${GREEN}./validate.sh start${NC}"  
+echo -e "3. Generate keys: ${GREEN}./scripts/generate-session-keys.sh${NC}"
 echo
 echo -e "${YELLOW}Then send us your session-keys.json file!${NC}"
 echo
