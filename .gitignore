@@ -19,8 +19,8 @@ config/staging-chainspec.json.tmp
 data/
 *.tmp
 
-# Generated scripts
-validate.sh
+# Generated scripts (validate.sh is now committed as it contains important DNS fixes)
+# validate.sh
 
 # Connection info cache
 network-info.tmp
