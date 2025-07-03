@@ -12,7 +12,7 @@ echo
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
 VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
-DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-e73e4002862328f70a46ee64d8fd681d5ebccdd5"
+DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-6b7d94374b723bad8bcfa326c045494228548a6c"
 
 # Function to print status
 print_info() {
@@ -267,9 +267,85 @@ case "${1:-}" in
             --port "${P2P_PORT:-30333}" \
             --rpc-port "${RPC_PORT:-9944}" \
             --prometheus-port "${PROMETHEUS_PORT:-9615}" \
-            --bootnodes="/ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk" \
+            --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
+            --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
             --rpc-cors all \
             --rpc-methods safe
+        ;;
+    
+    init)
+        echo "🔧 Initializing validator..."
+        if [ -f "$CONFIG_FILE" ]; then
+            source "$CONFIG_FILE"
+        else
+            echo "❌ Configuration not found. Run ./setup-validator.sh first"
+            exit 1
+        fi
+        
+        if [ ! -f "$BINARY" ]; then
+            echo "❌ Fennel node binary not found!"
+            echo "   Run: ./install.sh first"
+            exit 1
+        fi
+        
+        # Check if network key already exists
+        NETWORK_KEY_PATH="${DATA_DIR:-./data}/chains/custom/network/secret_ed25519"
+        if [ -f "$NETWORK_KEY_PATH" ]; then
+            echo "✅ Network keys already exist"
+            return 0
+        fi
+        
+        echo "🔑 Generating network keys..."
+        echo "This will take 30-60 seconds..."
+        
+        # Create data directory if it doesn't exist
+        mkdir -p "${DATA_DIR:-./data}"
+        
+        # Download chainspec if needed
+        if [ ! -f "config/staging-chainspec.json" ]; then
+            echo "📥 Downloading staging chainspec..."
+            curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json"
+        fi
+        
+        # Start briefly to generate keys
+        timeout 90 ./$BINARY \
+            --chain "config/staging-chainspec.json" \
+            --name "${VALIDATOR_NAME:-External-Validator}" \
+            --base-path "${DATA_DIR:-./data}" \
+            --port "${P2P_PORT:-30333}" \
+            --rpc-port "${RPC_PORT:-9944}" \
+            --prometheus-port "${PROMETHEUS_PORT:-9615}" \
+            --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
+            --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
+            --rpc-cors all \
+            --rpc-methods safe &
+        
+        INIT_PID=$!
+        
+        # Wait for network key to be generated
+        for i in {1..45}; do
+            if [ -f "$NETWORK_KEY_PATH" ]; then
+                echo "✅ Network key detected after $((i*2)) seconds"
+                break
+            fi
+            sleep 2
+            echo "⏳ Waiting for key generation... ($((i*2))s)"
+        done
+        
+        # Stop the initialization process
+        kill $INIT_PID 2>/dev/null || true
+        wait $INIT_PID 2>/dev/null || true
+        
+        # Final verification
+        if [ -f "$NETWORK_KEY_PATH" ]; then
+            echo "✅ Network keys generated successfully"
+            echo "✅ Validator initialization complete"
+        else
+            echo "❌ Failed to generate network keys after 90 seconds"
+            echo "❌ Check your network connection and try again"
+            echo "💡 You can retry with: ./validate.sh init"
+            exit 1
+        fi
         ;;
     
     stop)
@@ -307,9 +383,10 @@ case "${1:-}" in
         ;;
     
     *)
-        echo "Usage: $0 {start|stop|status|restart|logs}"
+        echo "Usage: $0 {init|start|stop|status|restart|logs}"
         echo
         echo "Commands:"
+        echo "  init    - Initialize validator (generate network keys) - Run this first!"
         echo "  start   - Start the validator"
         echo "  stop    - Stop the validator" 
         echo "  status  - Check if validator is running"
@@ -336,7 +413,9 @@ fi
 
 echo
 echo "📋 Network Configuration"
-print_info "Auto-connects to bootnode: /ip4/192.168.49.2/tcp/30604/p2p/12D3KooWRpzRTivvJ5ySvgbFnPeEE6rDhitQKL1fFJvvBGhnenSk"
+print_info "Auto-connects to Fennel staging bootnodes on Azure:"
+print_info "  - Bootnode 1: 135.18.208.132:30333 (12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz)"
+print_info "  - Bootnode 2: 132.196.191.14:30333 (12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su)"
 print_info "Chainspec auto-downloaded when needed"
 
 echo
@@ -344,8 +423,9 @@ echo "🎉 Installation complete!"
 echo
 echo "Next steps (Simple 3-step process):"
 echo "1. Setup: ./setup-validator.sh"
-echo "2. Start: ./validate.sh start"  
-echo "3. Generate keys: ./scripts/generate-session-keys.sh"
+echo "2. Initialize: ./validate.sh init"
+echo "3. Start: ./validate.sh start"
+echo "4. Generate keys: ./scripts/generate-session-keys.sh"
 echo
 echo "Then send us your session-keys.json file!"
 echo
