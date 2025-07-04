@@ -1,296 +1,110 @@
-# 🌱 Fennel External Validator
+# 🌱 Fennel Validator
 
-**Join the Fennel Blockchain Network as a Validator**
+**The simplest way to run a Fennel Network validator**
 
-Become part of the Fennel ecosystem by running a secure, professional validator node. This repository provides everything you need to set up, configure, and request admission to the Fennel staging network.
+## 🚀 Quick Start (Just One Command!)
 
----
-
-## 🚀 Quick Start Guide
-
-### Prerequisites
-- **Linux/macOS/Windows** with Docker or Rust toolchain
-- **Stable internet connection** (24/7 recommended for validators)
-- **Minimum 4GB RAM, 50GB storage** (SSD recommended)
-- **Open firewall port** (default: 30333)
-
-### 🎯 **3-Step Validator Journey**
-
-#### **Step 1: Setup Your Validator**
 ```bash
-# Download and install
-curl -sSL https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main/install.sh | bash
+# 1. Clone this repository
+git clone https://github.com/CorruptedAesthetic/FennelValidator.git
+cd FennelValidator
 
-# Configure your validator
-./setup-validator.sh
-
-# Initialize (generates network identity)
-./validate.sh init
+# 2. Run the start script
+./start.sh
 ```
 
-#### **Step 2: Start Validating**
-```bash
-# Start your validator node
-./validate.sh start
+**That's it!** The script will guide you through everything. No technical knowledge required.
 
-# Generate session keys for network admission
-./scripts/generate-session-keys.sh
+## What You Get
+
+After setup (~5-10 minutes), you'll have:
+- ✅ A running validator node
+- ✅ All required keys generated
+- ✅ Security automatically configured
+- ✅ Registration file ready for Fennel Labs
+
+## Simple Commands
+
+Just run `./start.sh` anytime to:
+- Start/restart your validator
+- Check status
+- Generate registration
+- View logs
+- Access troubleshooting
+
+## 📁 Clean & Simple Structure
+
+```
+FennelValidator/
+│
+├── 🟢 start.sh           # ← START HERE! The only script you need
+│
+├── Core Scripts (run automatically)
+│   ├── install.sh        # Installs validator
+│   ├── setup-validator.sh # Configures settings
+│   └── validate.sh       # Manages validator
+│
+├── 📂 tools/             # Utilities (accessed via start.sh menu)
+│   ├── quick-setup.sh    # Complete setup process
+│   ├── secure-launch.sh  # Security hardening
+│   ├── validator-status.sh # Status dashboard
+│   ├── troubleshoot.sh   # Fix issues
+│   ├── reset-validator.sh # Clean reset
+│   └── internal/         # Helper scripts
+│
+├── 📂 config/            # Your settings (created during setup)
+├── 📂 data/              # Blockchain data (created automatically)
+└── 📂 docs/              # Documentation
+    ├── FAQ.md            # Common questions
+    ├── BEGINNERS-GUIDE.md # Step-by-step guide
+    └── README-DETAILED.md # Technical details
 ```
 
-#### **Step 3: Request Network Admission**
-```bash
-# Submit validation request
-./scripts/submit-validation-request.sh
-```
+## Need Help?
 
-**That's it!** Your validation request will be reviewed by the Fennel network administrators.
+1. Run `./start.sh` and choose "Advanced options" → "Troubleshoot"
+2. Check [BEGINNERS-GUIDE.md](docs/BEGINNERS-GUIDE.md) for detailed instructions
+3. See [FAQ.md](docs/FAQ.md) for common questions
+
+## Important Files After Setup
+
+After running setup, you'll have these important files:
+- 📄 `COMPLETE-REGISTRATION-SUBMISSION.txt` - Send this to Fennel Labs
+- 🔑 `session-keys.json` - Your validator keys (keep secure!)
+- 🏦 `stash-account.json` - Your stash account (keep secure!)
+- ⚙️ `config/validator.conf` - Your validator settings
+
+## For Fennel Labs
+
+Send them the file: **`COMPLETE-REGISTRATION-SUBMISSION.txt`**
+
+They will:
+1. Review your submission
+2. Send you testnet tokens
+3. Guide you through final registration
+
+## ✨ Features
+
+- **One-command setup** - Complete installation in ~5 minutes
+- **Automatic dependency installation** - All required tools installed for you  
+- **Secure by default** - Automatic firewall configuration
+- **Built-in monitoring** - Real-time status dashboard
+- **Easy troubleshooting** - Self-diagnosing issues
+- **Clean reset** - Start fresh anytime with backup
+
+## 📋 Prerequisites
+
+The setup script will automatically install all required dependencies for you:
+- Linux (Ubuntu/Debian recommended) or macOS
+- 4GB+ RAM
+- 50GB+ available disk space
+- Internet connection
+
+Required tools (automatically installed if missing):
+- curl, wget, jq, git
+- netstat, ps, and other system utilities
+- UFW firewall (on Linux)
 
 ---
 
-## 🔐 Security & Best Practices
-
-### **Key Security**
-- ✅ **Session keys** are generated locally and never transmitted
-- ✅ **Network identity** is unique to your validator
-- ✅ **Private keys** remain on your system only
-- ✅ **Secure key backup** instructions provided
-
-### **Network Security**
-- ✅ **Encrypted P2P** communication with other validators
-- ✅ **Firewall configuration** guidance included
-- ✅ **Monitoring tools** for validator health
-- ✅ **Automatic updates** for chain specifications
-
-### **Operational Security**
-- ✅ **Resource monitoring** to prevent overload
-- ✅ **Log management** for troubleshooting
-- ✅ **Graceful shutdown** procedures
-- ✅ **Backup and recovery** documentation
-
----
-
-## 🌐 Network Information
-
-### **Fennel Staging Network**
-- **Purpose**: Production-ready testing environment
-- **Consensus**: AURA (block production) + GRANDPA (finality)
-- **Block Time**: ~6 seconds
-- **Network Type**: Proof of Authority (PoA)
-- **Validator Admission**: Managed by Fennel core team
-
-### **Connection Details**
-- **Bootnode 1**: `135.18.208.132:30333`
-- **Bootnode 2**: `132.196.191.14:30333`
-- **Chain Spec**: Auto-downloaded from [fennel-solonet](https://github.com/CorruptedAesthetic/fennel-solonet)
-- **Network ID**: `staging`
-
----
-
-## 📋 Validator Management
-
-### **Essential Commands**
-```bash
-./validate.sh status    # Check validator status
-./validate.sh start     # Start validator
-./validate.sh stop      # Stop validator gracefully
-./validate.sh restart   # Restart validator
-./validate.sh logs      # View detailed logs
-./validate.sh update    # Update chain specification
-```
-
-### **Key Management**
-```bash
-./scripts/generate-session-keys.sh     # Generate new session keys
-./scripts/backup-keys.sh               # Backup validator keys
-./scripts/restore-keys.sh              # Restore from backup
-./scripts/rotate-session-keys.sh       # Rotate existing keys
-```
-
-### **Network Operations**
-```bash
-./scripts/health-check.sh              # Comprehensive health check
-./scripts/peer-info.sh                 # Show connected peers
-./scripts/sync-status.sh               # Check synchronization
-./scripts/performance-metrics.sh       # Performance statistics
-```
-
----
-
-## 🎯 Validation Request Process
-
-### **What Happens When You Submit**
-
-1. **Automated Validation**
-   - System checks your validator configuration
-   - Verifies network connectivity and sync status
-   - Validates session key format and security
-
-2. **Security Review**
-   - Network administrators review your request
-   - Validator identity and reputation assessment
-   - Technical configuration verification
-
-3. **Network Admission**
-   - Upon approval, your validator is added to the active set
-   - You'll receive confirmation and monitoring access
-   - Begin earning validation rewards and network participation
-
-### **Request Requirements**
-- ✅ **Stable network connection** (>99% uptime expected)
-- ✅ **Valid session keys** generated by your validator
-- ✅ **Synchronized node** with current blockchain state
-- ✅ **Contact information** for network communications
-- ✅ **Commitment** to network participation and governance
-
----
-
-## 🛠️ Advanced Configuration
-
-### **Custom Network Settings**
-```bash
-# Edit configuration
-nano config/validator.conf
-
-# Available options:
-VALIDATOR_NAME="Your-Validator-Name"
-P2P_PORT=30333
-RPC_PORT=9944
-PROMETHEUS_PORT=9615
-LOG_LEVEL=info
-DATA_DIR=./data
-```
-
-### **Monitoring Integration**
-```bash
-# Enable Prometheus metrics
-./scripts/setup-monitoring.sh
-
-# Configure external monitoring
-./scripts/configure-grafana.sh
-
-# Set up alerting
-./scripts/setup-alerts.sh
-```
-
-### **Performance Optimization**
-```bash
-# Optimize for your hardware
-./scripts/optimize-performance.sh
-
-# Configure resource limits
-./scripts/set-resource-limits.sh
-
-# Enable fast sync (for new validators)
-./scripts/enable-fast-sync.sh
-```
-
----
-
-## 🆘 Troubleshooting
-
-### **Common Issues**
-
-#### **Binary Not Found**
-```
-❌ Fennel node binary not found!
-```
-**Solution**: Run the installer first
-```bash
-./install.sh
-```
-
-#### **Network Connection Failed**
-```
-❌ Failed to connect to bootnodes
-```
-**Solutions**:
-1. Check firewall: `sudo ufw allow 30333/tcp`
-2. Verify connectivity: `./scripts/test-connectivity.sh`
-3. Check port availability: `netstat -ln | grep :30333`
-
-#### **Sync Issues**
-```
-⚠️ Node not synchronized
-```
-**Solutions**:
-1. Wait for initial sync (can take 30-60 minutes)
-2. Check peers: `./scripts/peer-info.sh`
-3. Restart with fast sync: `./validate.sh restart --fast-sync`
-
-#### **Key Generation Failed**
-```
-❌ Failed to generate session keys
-```
-**Solutions**:
-1. Ensure validator is running: `./validate.sh status`
-2. Check RPC access: `curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_health", "params":[]}' http://localhost:9944`
-3. Restart validator: `./validate.sh restart`
-
-### **Getting Help**
-
-1. **Check logs**: `./validate.sh logs`
-2. **Run diagnostics**: `./scripts/diagnose.sh`
-3. **Contact support**: Include diagnostics output
-4. **Community**: Join the Fennel validator community
-
----
-
-## 📊 Network Participation
-
-### **Validator Responsibilities**
-- 🔄 **Block Production**: Participate in consensus when selected
-- 🏛️ **Governance**: Vote on network proposals and upgrades
-- 🛡️ **Security**: Maintain high uptime and secure operations
-- 🤝 **Community**: Engage with other validators and network governance
-
-### **Rewards & Incentives**
-- 💰 **Validation Rewards**: Earn tokens for successful block production
-- 🎯 **Performance Bonuses**: Additional rewards for high uptime
-- 🏆 **Governance Participation**: Rewards for active governance
-- 📈 **Network Growth**: Benefit from network value appreciation
-
-### **Network Governance**
-- 🗳️ **Proposal Voting**: Participate in network decision-making
-- 💡 **Improvement Proposals**: Submit network enhancements
-- 🔧 **Technical Upgrades**: Vote on protocol improvements
-- 🌍 **Community Building**: Help grow the Fennel ecosystem
-
----
-
-## 🔗 Resources
-
-### **Documentation**
-- [Fennel Protocol](https://github.com/CorruptedAesthetic/fennel-solonet) - Main protocol repository
-- [Substrate Documentation](https://docs.substrate.io/) - Underlying blockchain framework
-- [Polkadot.js Apps](https://polkadot.js.org/apps/) - Network interaction interface
-
-### **Community**
-- **Discord**: [Join Fennel Community](#) <!-- Add actual Discord link -->
-- **Telegram**: [Fennel Validators](#) <!-- Add actual Telegram link -->
-- **Forum**: [Fennel Governance](#) <!-- Add actual forum link -->
-
-### **Support**
-- **Technical Issues**: Open an issue in this repository
-- **Network Questions**: Contact the Fennel team
-- **Emergency**: Use the emergency contact procedures
-
----
-
-## 📜 License
-
-This project is licensed under the MIT-0 License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## ⚡ Quick Links
-
-- 🚀 **[Install Now](#-quick-start-guide)** - Get started in 5 minutes
-- 🔐 **[Security Guide](#-security--best-practices)** - Secure your validator
-- 🎯 **[Submit Request](#-validation-request-process)** - Join the network
-- 🆘 **[Get Help](#-troubleshooting)** - Troubleshooting guide
-
----
-
-**Ready to become a Fennel validator? Let's get started!** 🌱
-
-*Questions? Contact the Fennel team or open an issue in this repository.* 
+**Ready to validate?** Run `./start.sh` and let's begin! 🌱 

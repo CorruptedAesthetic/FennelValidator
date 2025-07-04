@@ -1,5 +1,74 @@
 # Fennel Validator - Files to ignore in version control
 
+# Build and temporary files
+target/
+Cargo.lock
+.DS_Store
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Validator-specific files (personal data)
+session-keys.json
+stash-account.json
+validator-account-info.json
+config/validator.conf
+*SUBMISSION*.txt
+*REGISTRATION*.txt
+*INSTRUCTIONS*.txt
+
+# Validator data directory
+data/chains/*/keystore/
+data/chains/*/network/
+data/chains/*/db/
+data/chains/*/paritydb/
+
+# Log files
+*.log
+logs/
+monitoring/
+
+# Backup files
+backups/
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache (if any)
+__pycache__/
+*.pyc
+*.pyo
+
+# Test files
+test-*
+*-test
+
+# Personal notes
+notes.txt
+notes.md
+TODO.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Downloaded binaries
 bin/fennel-node
 bin/fennel-node.exe
@@ -7,7 +76,6 @@ bin/fennel-node.backup.*
 bin/README.md
 
 # Generated configuration
-config/validator.conf
 config/validator.conf.backup.*
 
 # Downloaded chainspecs (always downloaded fresh from main repo)
