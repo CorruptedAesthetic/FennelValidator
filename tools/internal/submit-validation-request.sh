@@ -30,7 +30,7 @@ check_prerequisites() {
     # Check if session keys exist
     if [ ! -f "session-keys.json" ]; then
         echo -e "${RED}❌ Session keys not generated${NC}"
-        echo "   Run: ./scripts/generate-session-keys.sh"
+        echo "   Run: ./tools/internal/generate-keys-with-restart.sh"
         ((errors++))
     fi
     

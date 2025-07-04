@@ -35,8 +35,8 @@ EOF
     echo "  1) 🚀 Complete Setup (Recommended for new validators)"
     echo "  2) 📦 Install Dependencies"
     echo "  3) 🔧 Setup/Reconfigure Validator"
-    echo "  4) 🔐 Generate Session Keys"
-    echo "  5) 📋 Complete Registration"
+    echo "  4) 🔑 Generate Keys & Complete Registration"
+    echo "  5) 📋 Re-generate Registration (if keys already exist)"
     echo
     echo -e "${CYAN}Operations:${NC}"
     echo "  6) ▶️  Start Validator"
@@ -110,12 +110,18 @@ while true; do
             ;;
         4)
             clear
-            ./scripts/generate-session-keys.sh
+            echo -e "${GREEN}Generating session keys and registration...${NC}"
+            ./tools/internal/generate-keys-with-restart.sh
             wait_for_enter
             ;;
         5)
             clear
-            ./tools/complete-registration.sh
+            if [ ! -f "validator-data/session-keys.json" ]; then
+                echo -e "${YELLOW}No session keys found. Running key generation first...${NC}"
+                ./tools/internal/generate-keys-with-restart.sh
+            else
+                ./tools/complete-registration.sh
+            fi
             wait_for_enter
             ;;
         6)

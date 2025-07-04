@@ -45,34 +45,26 @@ git clone https://github.com/CorruptedAesthetic/FennelValidator.git
 cd FennelValidator
 ```
 
-### Step 3: Check Your System
+### Step 3: Start the Setup
 
-Run the pre-flight check:
+Run the main start script:
 ```bash
-./preflight-check.sh
-```
-
-This checks if your system is ready. If you see any ❌ marks:
-- Follow the install hints shown
-- Run the check again
-
-### Step 4: Run the Quick Start
-
-When all checks pass, run:
-```bash
-./quick-start.sh
+./start.sh
 ```
 
 **What happens:**
-1. **System Check** - Verifies everything is ready
-2. **Installation** - Downloads the validator software
-3. **Configuration** - You'll choose a name for your validator
-4. **Secure Launch** - Starts your validator with security
-5. **Registration** - Creates files to send to Fennel Labs
+1. **First-time detection** - Automatically detects this is your first run
+2. **Complete Setup** - Guides you through the entire process
+3. **System Check** - Verifies everything is ready
+4. **Installation** - Downloads the validator software
+5. **Configuration** - You'll choose a name for your validator
+6. **Secure Launch** - Starts your validator with security hardening
+7. **Key Generation** - Creates your validator keys
+8. **Registration** - Creates files to send to Fennel Labs
 
 **Time needed:** About 5-10 minutes
 
-### Step 5: Follow the Prompts
+### Step 4: Follow the Prompts
 
 The script will:
 - Ask for your validator name (example: "MyCompany-Validator")
@@ -82,106 +74,121 @@ The script will:
 **Tips:**
 - For most questions, just press Enter to use defaults
 - Choose a unique validator name
-- Write down any secret phrases shown!
+- The script securely handles all keys and files
 
 ## After Setup - What You Get
 
-### Important Files Created
+### Important Files Created (in `validator-data/`)
 
-1. **COMPLETE-REGISTRATION-SUBMISSION.txt**
+1. **`COMPLETE-REGISTRATION-SUBMISSION.txt`**
    - Send this to Fennel Labs
-   - Contains your validator information
+   - Contains your validator information (public info only)
 
-2. **SESSION-SETKEYS-INSTRUCTIONS.txt**
-   - Keep for your reference
-   - Instructions for later steps
-
-3. **session-keys.json**
+2. **`session-keys.json`**
    - Your validator's operational keys
    - Keep secure!
 
-4. **stash-account.json**
+3. **`stash-account.json`**
    - Your validator's main account
    - Contains secret phrase - KEEP VERY SECURE!
+
+4. **`complete-validator-setup-instructions.txt`**
+   - Reference instructions for your setup
 
 ### What to Do Next
 
 1. **Send Registration to Fennel Labs**
    - Email: [contact info]
-   - Attach: COMPLETE-REGISTRATION-SUBMISSION.txt
+   - Attach: `validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt`
 
-2. **Wait for Response**
-   - Fennel Labs reviews your submission
-   - They send testnet tokens to your account
-   - They provide further instructions
+2. **Wait for Confirmation**
+   - Fennel Labs handles all registration steps using sudo privileges
+   - No manual session.setKeys() call needed from you
+   - They send confirmation when your validator is registered
 
-3. **Complete Registration**
-   - Follow SESSION-SETKEYS-INSTRUCTIONS.txt
-   - Notify Fennel Labs when done
+3. **Start Validating**
+   - Your validator is already running!
+   - You'll start earning rewards once registered
 
 ## Managing Your Validator
 
-### Check if Running
+All management is done through the main menu:
+
 ```bash
-./validate.sh status
+./start.sh
 ```
 
-### View Logs
-```bash
-./validate.sh logs
-```
-
-### Stop Validator
-```bash
-./validate.sh stop
-```
-
-### Restart Validator
-```bash
-./validate.sh restart
-```
+**Menu Options:**
+- **Check Status** - See if your validator is running
+- **View Logs** - Check validator activity
+- **Troubleshoot** - Fix any issues
+- **Restart** - Restart your validator
+- **Generate Registration** - Create new registration files
 
 ## Common Questions
 
 ### Q: Is this safe?
 A: Yes! The scripts:
-- Set up a firewall
+- Set up a firewall automatically
 - Secure your keys with proper permissions
-- Only allow local access to sensitive functions
+- Only share public information with Fennel Labs
+- Keep your secret phrases private
 
 ### Q: What if something goes wrong?
-A: The scripts have error handling. If you see errors:
-1. Read the error message
-2. Check the troubleshooting section in README.md
-3. Ask for help in the community
+A: Run `./start.sh` and choose "Troubleshoot" from the menu. The system will:
+1. Diagnose common issues
+2. Suggest fixes
+3. Apply repairs automatically where possible
 
 ### Q: Do I need to keep my computer on?
 A: Yes, validators should run 24/7 for best results. Consider using a dedicated machine or VPS.
 
-### Q: What are session keys vs stash account?
+### Q: What's the difference between session keys and stash account?
 - **Session Keys**: Used for validator operations (creating blocks)
-- **Stash Account**: Your main account that holds funds and controls the validator
+- **Stash Account**: Your main account that controls the validator and holds funds
 
 ### Q: How do I backup my validator?
-A: Keep safe copies of:
+A: Keep safe copies of the entire `validator-data/` directory:
 - `session-keys.json`
 - `stash-account.json`
 - The secret phrase from stash account
 
+### Q: What information gets shared with Fennel Labs?
+A: Only public information:
+- Your stash account address
+- Your session keys
+- Your validator name
+- **Your secret phrases stay private with you**
+
 ## Getting Help
 
 If you need help:
-1. Check EXAMPLE-VALIDATOR-SETUP.md for examples
-2. Read the main README.md
-3. Join the Fennel community channels
-4. Open an issue on GitHub
+1. Run `./start.sh` → choose "Troubleshoot"
+2. Check FAQ.md for common questions
+3. Read the detailed README-DETAILED.md
+4. Join the Fennel community channels
+5. Open an issue on GitHub
 
-## Security Tips
+## Security Features (Automatic)
 
-1. **Never share your secret phrase**
-2. **Keep backups in a secure location**
-3. **Don't run the validator as root user**
-4. **Keep your system updated**
+The setup automatically applies:
+- ✅ **Firewall configuration** - P2P port open, RPC/metrics secured
+- ✅ **File permissions** - All keys secured to 600 permissions
+- ✅ **Process isolation** - Validator runs with proper security
+- ✅ **Safe sharing** - Only public info shared with network operators
+
+## One-Command Management
+
+Remember, you only need to know one command:
+```bash
+./start.sh
+```
+
+This gives you access to everything:
+- Setup and configuration
+- Status monitoring
+- Troubleshooting
+- Registration management
 
 ---
 

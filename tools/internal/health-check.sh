@@ -150,11 +150,11 @@ check_session_keys() {
             ((HEALTH_SCORE++))
         else
             echo -e "${RED}❌ Session keys not found or invalid${NC}"
-            echo "   Generate with: ./scripts/generate-session-keys.sh"
+            echo "   Generate with: ./tools/internal/generate-keys-with-restart.sh"
         fi
     else
         echo -e "${RED}❌ Session keys file not found${NC}"
-        echo "   Generate with: ./scripts/generate-session-keys.sh"
+        echo "   Generate with: ./tools/internal/generate-keys-with-restart.sh"
     fi
 }
 
@@ -293,7 +293,7 @@ generate_summary() {
     echo
     echo -e "${BLUE}💡 Next Steps:${NC}"
     if [ ! -f "session-keys.json" ]; then
-        echo "1. Generate session keys: ./scripts/generate-session-keys.sh"
+        echo "1. Generate session keys: ./tools/internal/generate-keys-with-restart.sh"
     fi
     if [ $HEALTH_SCORE -lt $MAX_SCORE ]; then
         echo "2. Fix issues identified above"

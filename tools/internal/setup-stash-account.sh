@@ -35,17 +35,17 @@ echo "   - Must be done before network operators can register you"
 echo
 
 # Check if we have session keys
-if [ ! -f "../session-keys.json" ]; then
+if [ ! -f "../validator-data/session-keys.json" ]; then
     echo -e "${RED}❌ Session keys not found!${NC}"
     echo "Generate session keys first: ./scripts/generate-session-keys-auto.sh"
     exit 1
 fi
 
 # Read session keys
-SESSION_KEYS=$(jq -r '.session_keys' ../session-keys.json)
-AURA_KEY=$(jq -r '.aura_key' ../session-keys.json)
-GRANDPA_KEY=$(jq -r '.grandpa_key' ../session-keys.json)
-VALIDATOR_NAME=$(jq -r '.validator_name' ../session-keys.json)
+SESSION_KEYS=$(jq -r '.session_keys' ../validator-data/session-keys.json)
+AURA_KEY=$(jq -r '.aura_key' ../validator-data/session-keys.json)
+GRANDPA_KEY=$(jq -r '.grandpa_key' ../validator-data/session-keys.json)
+VALIDATOR_NAME=$(jq -r '.validator_name' ../validator-data/session-keys.json)
 
 echo -e "${GREEN}✅ Found your session keys:${NC}"
 echo "Validator: $VALIDATOR_NAME"

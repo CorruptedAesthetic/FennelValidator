@@ -29,15 +29,15 @@ else
     USE_FENNEL_NODE=false
 fi
 
-# Check if session keys exist
-if [ ! -f "session-keys.json" ]; then
+# Check if session keys exist (look in parent directory)
+if [ ! -f "../../validator-data/session-keys.json" ]; then
     echo -e "${RED}❌ Session keys not found!${NC}"
-    echo "Generate session keys first: ./scripts/generate-session-keys-auto.sh"
+    echo "Generate session keys first: ./tools/internal/generate-keys-with-restart.sh"
     exit 1
 fi
 
-VALIDATOR_NAME=$(jq -r '.validator_name' session-keys.json)
-SESSION_KEYS=$(jq -r '.session_keys' session-keys.json)
+VALIDATOR_NAME=$(jq -r '.validator_name' ../../validator-data/session-keys.json)
+SESSION_KEYS=$(jq -r '.session_keys' ../../validator-data/session-keys.json)
 
 echo -e "${GREEN}📋 Validator: $VALIDATOR_NAME${NC}"
 echo "Session Keys: $SESSION_KEYS"
@@ -52,12 +52,12 @@ else
     STASH_OUTPUT=$(subkey generate 2>/dev/null)
 fi
 
-# Extract information
-STASH_SECRET_PHRASE=$(echo "$STASH_OUTPUT" | grep "Secret phrase:" | sed 's/Secret phrase:[[:space:]]*//')
-STASH_SECRET_SEED=$(echo "$STASH_OUTPUT" | grep "Secret seed:" | sed 's/Secret seed:[[:space:]]*//')
-STASH_PUBLIC_KEY=$(echo "$STASH_OUTPUT" | grep "Public key" | sed 's/Public key[^:]*:[[:space:]]*//')
-STASH_ACCOUNT_ID=$(echo "$STASH_OUTPUT" | grep "Account ID:" | sed 's/Account ID:[[:space:]]*//')
-STASH_SS58=$(echo "$STASH_OUTPUT" | grep "SS58 Address:" | sed 's/SS58 Address:[[:space:]]*//')
+# Extract information and clean it
+STASH_SECRET_PHRASE=$(echo "$STASH_OUTPUT" | grep "Secret phrase:" | sed 's/Secret phrase:[[:space:]]*//' | tr -d '\n\r')
+STASH_SECRET_SEED=$(echo "$STASH_OUTPUT" | grep "Secret seed:" | sed 's/Secret seed:[[:space:]]*//' | tr -d '\n\r' | sed 's/[[:space:]]*$//')
+STASH_PUBLIC_KEY=$(echo "$STASH_OUTPUT" | grep "Public key" | sed 's/Public key[^:]*:[[:space:]]*//' | tr -d '\n\r' | sed 's/[[:space:]]*$//')
+STASH_ACCOUNT_ID=$(echo "$STASH_OUTPUT" | grep "Account ID:" | sed 's/Account ID:[[:space:]]*//' | tr -d '\n\r' | sed 's/[[:space:]]*$//')
+STASH_SS58=$(echo "$STASH_OUTPUT" | grep "SS58 Address:" | sed 's/SS58 Address:[[:space:]]*//' | tr -d '\n\r' | sed 's/[[:space:]]*$//')
 
 echo -e "${GREEN}✅ Stash account generated!${NC}"
 echo
@@ -69,8 +69,8 @@ echo "Account ID: $STASH_ACCOUNT_ID"
 echo "SS58 Address: $STASH_SS58"
 echo
 
-# Create comprehensive stash account file
-cat > ../stash-account.json << EOF
+# Create comprehensive stash account file  
+cat > ../../validator-data/stash-account.json << EOF
 {
     "validator_name": "$VALIDATOR_NAME",
     "stash_account": {
@@ -86,7 +86,7 @@ cat > ../stash-account.json << EOF
 EOF
 
 # Create step-by-step instructions
-cat > ../complete-validator-setup-instructions.txt << EOF
+cat > ../../validator-data/complete-validator-setup-instructions.txt << EOF
 COMPLETE VALIDATOR SETUP INSTRUCTIONS
 ====================================
 
@@ -151,8 +151,8 @@ echo "3. This is for TESTING only - use hardware wallet for production"
 echo
 
 echo -e "${GREEN}💾 Files created:${NC}"
-echo "- stash-account.json (complete account info)"
-echo "- complete-validator-setup-instructions.txt (step-by-step guide)"
+echo "- validator-data/stash-account.json (complete account info)"
+echo "- validator-data/complete-validator-setup-instructions.txt (step-by-step guide)"
 echo
 
 echo -e "${YELLOW}📋 Quick Summary for Network Operators:${NC}"

@@ -65,13 +65,13 @@ BACKUP_DIR="backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
 # Backup keys if they exist
-if [ -f "session-keys.json" ]; then
-    cp session-keys.json "$BACKUP_DIR/"
+if [ -f "validator-data/session-keys.json" ]; then
+    cp validator-data/session-keys.json "$BACKUP_DIR/"
     echo -e "${GREEN}✓ Backed up session keys${NC}"
 fi
 
-if [ -f "stash-account.json" ]; then
-    cp stash-account.json "$BACKUP_DIR/"
+if [ -f "validator-data/stash-account.json" ]; then
+    cp validator-data/stash-account.json "$BACKUP_DIR/"
     echo -e "${GREEN}✓ Backed up stash account${NC}"
 fi
 
@@ -80,8 +80,8 @@ if [ -f "config/validator.conf" ]; then
     echo -e "${GREEN}✓ Backed up configuration${NC}"
 fi
 
-if [ -f "COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
-    cp COMPLETE-REGISTRATION-SUBMISSION.txt "$BACKUP_DIR/"
+if [ -f "validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
+    cp validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt "$BACKUP_DIR/"
     echo -e "${GREEN}✓ Backed up registration file${NC}"
 fi
 
@@ -98,8 +98,9 @@ if [ -d "data" ]; then
 fi
 
 # Remove keys
-rm -f session-keys.json
-rm -f stash-account.json
+rm -f validator-data/session-keys.json
+rm -f validator-data/stash-account.json
+rm -f validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt
 rm -f validator-account-info.json
 echo -e "${GREEN}✓ Removed key files${NC}"
 

@@ -18,8 +18,12 @@ Thumbs.db
 Desktop.ini
 
 # Validator-specific files (personal data)
-session-keys.json
-stash-account.json
+validator-data/session-keys.json
+validator-data/stash-account.json
+validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt
+validator-data/complete-validator-setup-instructions.txt
+validator-data/validator-account-info.json
+validator-data/account-id-for-operators.txt
 validator-account-info.json
 config/validator.conf
 *SUBMISSION*.txt

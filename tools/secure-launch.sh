@@ -36,8 +36,8 @@ apply_security_hardening() {
     umask 077
     
     # Secure sensitive files
-    chmod 600 session-keys.json 2>/dev/null || true
-    chmod 600 stash-account.json 2>/dev/null || true
+    chmod 600 validator-data/session-keys.json 2>/dev/null || true
+chmod 600 validator-data/stash-account.json 2>/dev/null || true
     chmod 700 config/ 2>/dev/null || true
     chmod 600 config/* 2>/dev/null || true
     
@@ -186,8 +186,8 @@ perform_health_check() {
     fi
     
     # Check file permissions
-    if [ -f "session-keys.json" ]; then
-        local perms=$(stat -c "%a" session-keys.json)
+    if [ -f "validator-data/session-keys.json" ]; then
+        local perms=$(stat -c "%a" validator-data/session-keys.json)
         if [ "$perms" = "600" ]; then
             log_success "✅ Session keys file permissions secure (600)"
         else

@@ -130,8 +130,8 @@ echo -e "${CYAN}Keys & Registration:${NC}"
 echo "-------------------"
 
 # Session keys
-if [ -f "session-keys.json" ]; then
-    SESSION_KEYS=$(jq -r '.session_keys // "not found"' session-keys.json 2>/dev/null)
+if [ -f "validator-data/session-keys.json" ]; then
+    SESSION_KEYS=$(jq -r '.session_keys // "not found"' validator-data/session-keys.json 2>/dev/null)
     if [ "$SESSION_KEYS" != "not found" ] && [ -n "$SESSION_KEYS" ]; then
         echo -e "Session Keys: ${GREEN}✓ Generated${NC}"
         echo -e "  ${CYAN}${SESSION_KEYS:0:20}...${SESSION_KEYS: -20}${NC}"
@@ -144,8 +144,8 @@ else
 fi
 
 # Stash account
-if [ -f "stash-account.json" ]; then
-    STASH_ADDRESS=$(jq -r '.stash_account.ss58_address // "not found"' stash-account.json 2>/dev/null)
+if [ -f "validator-data/stash-account.json" ]; then
+    STASH_ADDRESS=$(jq -r '.stash_account.ss58_address // "not found"' validator-data/stash-account.json 2>/dev/null)
     if [ "$STASH_ADDRESS" != "not found" ] && [ -n "$STASH_ADDRESS" ]; then
         echo -e "Stash Account: ${GREEN}✓ Created${NC}"
         echo -e "  ${CYAN}$STASH_ADDRESS${NC}"
@@ -158,7 +158,7 @@ else
 fi
 
 # Registration submission
-if [ -f "COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
+if [ -f "validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
     echo -e "Registration File: ${GREEN}✓ Ready to submit${NC}"
 else
     echo -e "Registration File: ${RED}✗ Not created${NC}"
@@ -173,8 +173,8 @@ echo "----------------"
 
 # Check file permissions
 SECURE=true
-if [ -f "session-keys.json" ]; then
-    PERMS=$(stat -c "%a" session-keys.json 2>/dev/null || stat -f "%A" session-keys.json 2>/dev/null || echo "unknown")
+if [ -f "validator-data/session-keys.json" ]; then
+    PERMS=$(stat -c "%a" validator-data/session-keys.json 2>/dev/null || stat -f "%A" validator-data/session-keys.json 2>/dev/null || echo "unknown")
     if [ "$PERMS" = "600" ]; then
         echo -e "Session Keys Permissions: ${GREEN}✓ Secure (600)${NC}"
     else
@@ -221,10 +221,10 @@ echo -e "${CYAN}═════════════════════�
 
 # Count statuses
 if pgrep -f "fennel-node.*--validator" >/dev/null; then
-    if [ -f "COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
+    if [ -f "validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
         echo -e "${GREEN}✅ Validator is running and ready for registration${NC}"
         echo -e "${CYAN}Next step: Send COMPLETE-REGISTRATION-SUBMISSION.txt to Fennel Labs${NC}"
-    elif [ -f "session-keys.json" ]; then
+    elif [ -f "validator-data/session-keys.json" ]; then
         echo -e "${YELLOW}⚠️  Validator running but registration incomplete${NC}"
         echo -e "${CYAN}Next step: Run ./complete-registration.sh${NC}"
     else

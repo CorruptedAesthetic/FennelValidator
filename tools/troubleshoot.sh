@@ -164,31 +164,31 @@ fi
 echo
 echo -e "${PURPLE}═══ Checking Keys & Registration ═══${NC}"
 check_issue "Session keys" \
-    "test -f session-keys.json && jq -r '.session_keys' session-keys.json >/dev/null" \
+    "test -f validator-data/session-keys.json && jq -r '.session_keys' validator-data/session-keys.json >/dev/null" \
     "./tools/internal/generate-session-keys-auto.sh" \
     "Session keys not generated"
 
 check_issue "Stash account" \
-    "test -f stash-account.json && jq -r '.stash_account.ss58_address' stash-account.json >/dev/null" \
+    "test -f validator-data/stash-account.json && jq -r '.stash_account.ss58_address' validator-data/stash-account.json >/dev/null" \
     "./tools/internal/generate-stash-account.sh" \
     "Stash account not created"
 
 check_issue "Registration file" \
-    "test -f COMPLETE-REGISTRATION-SUBMISSION.txt" \
+    "test -f validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt" \
     "./tools/complete-registration.sh" \
     "Registration submission not created"
 
 # 8. Check file permissions
 echo
 echo -e "${PURPLE}═══ Checking Security ═══${NC}"
-if [ -f "session-keys.json" ]; then
-    PERMS=$(stat -c "%a" session-keys.json 2>/dev/null || stat -f "%A" session-keys.json 2>/dev/null || echo "unknown")
+if [ -f "validator-data/session-keys.json" ]; then
+    PERMS=$(stat -c "%a" validator-data/session-keys.json 2>/dev/null || stat -f "%A" validator-data/session-keys.json 2>/dev/null || echo "unknown")
     if [ "$PERMS" != "600" ]; then
         echo -e "${YELLOW}⚠ Session keys have insecure permissions: $PERMS${NC}"
         read -p "Fix permissions? (y/n): " fix_perms
         if [[ "$fix_perms" =~ ^[Yy]$ ]]; then
-            chmod 600 session-keys.json
-            chmod 600 stash-account.json 2>/dev/null || true
+            chmod 600 validator-data/session-keys.json
+            chmod 600 validator-data/stash-account.json 2>/dev/null || true
             FIXES_APPLIED=$((FIXES_APPLIED + 1))
             echo -e "${GREEN}✓ Permissions fixed${NC}"
         fi
@@ -245,7 +245,7 @@ echo "  • Join community support channels"
 # Suggest next steps based on current state
 echo
 echo -e "${BLUE}Suggested next step:${NC}"
-if [ ! -f "COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
+if [ ! -f "validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt" ]; then
     echo -e "${CYAN}Run ./start.sh and choose option 3 to generate registration${NC}"
 elif ! pgrep -f "fennel-node.*--validator" >/dev/null; then
     echo -e "${CYAN}Run ./start.sh and choose option 1 to start validator${NC}"

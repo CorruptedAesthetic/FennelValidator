@@ -16,9 +16,9 @@ echo "Automatically extracts AccountId from your session keys"
 echo
 
 # Check if session keys exist
-if [ ! -f "../session-keys.json" ]; then
+if [ ! -f "../validator-data/session-keys.json" ]; then
     echo -e "${RED}❌ Session keys not found!${NC}"
-    echo "Generate session keys first: ./scripts/generate-session-keys-auto.sh"
+    echo "Generate session keys first: ./tools/internal/generate-keys-with-restart.sh"
     exit 1
 fi
 
@@ -36,9 +36,9 @@ else
 fi
 
 # Read session keys
-AURA_KEY=$(jq -r '.aura_key' ../session-keys.json)
-GRANDPA_KEY=$(jq -r '.grandpa_key' ../session-keys.json)
-VALIDATOR_NAME=$(jq -r '.validator_name' ../session-keys.json)
+AURA_KEY=$(jq -r '.aura_key' ../validator-data/session-keys.json)
+GRANDPA_KEY=$(jq -r '.grandpa_key' ../validator-data/session-keys.json)
+VALIDATOR_NAME=$(jq -r '.validator_name' ../validator-data/session-keys.json)
 
 if [ "$AURA_KEY" = "null" ] || [ "$GRANDPA_KEY" = "null" ]; then
     echo -e "${RED}❌ Invalid session keys file!${NC}"
@@ -113,7 +113,7 @@ else
 fi
 
 # Create comprehensive AccountId file
-cat > ../validator-account-info.json << EOF
+cat > ../validator-data/validator-account-info.json << EOF
 {
     "validator_name": "$VALIDATOR_NAME",
     "aura": {
@@ -131,7 +131,7 @@ cat > ../validator-account-info.json << EOF
 EOF
 
 # Create quick reference file for network operators
-cat > ../account-id-for-operators.txt << EOF
+cat > ../validator-data/account-id-for-operators.txt << EOF
 VALIDATOR ACCOUNT ID INFORMATION
 ===============================
 
@@ -157,7 +157,7 @@ echo "AccountId: $AURA_ACCOUNT_ID"
 echo "SS58 Address: $AURA_SS58"
 echo
 echo -e "${BLUE}💾 Files created:${NC}"
-echo "- validator-account-info.json (complete JSON format)"
-echo "- account-id-for-operators.txt (quick reference)"
+echo "- validator-data/validator-account-info.json (complete JSON format)"
+echo "- validator-data/account-id-for-operators.txt (quick reference)"
 echo
 echo -e "${GREEN}🎯 Next: Send the AccountId to network operators for validator registration!${NC}" 

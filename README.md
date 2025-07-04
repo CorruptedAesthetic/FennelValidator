@@ -69,19 +69,23 @@ FennelValidator/
 ## Important Files After Setup
 
 After running setup, you'll have these important files:
-- 📄 `COMPLETE-REGISTRATION-SUBMISSION.txt` - Send this to Fennel Labs
-- 🔑 `session-keys.json` - Your validator keys (keep secure!)
-- 🏦 `stash-account.json` - Your stash account (keep secure!)
+- 📄 `validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt` - Send this to Fennel Labs
+- 🔑 `validator-data/session-keys.json` - Your validator keys (keep secure!)
+- 🏦 `validator-data/stash-account.json` - Your stash account (keep secure!)
 - ⚙️ `config/validator.conf` - Your validator settings
 
 ## For Fennel Labs
 
-Send them the file: **`COMPLETE-REGISTRATION-SUBMISSION.txt`**
+Send them the file: **`validator-data/COMPLETE-REGISTRATION-SUBMISSION.txt`**
 
-They will:
+They will handle everything automatically:
 1. Review your submission
-2. Send you testnet tokens
-3. Guide you through final registration
+2. Fund your stash account with testnet tokens (via sudo)
+3. Bind your session keys to your stash account (via sudo)
+4. Add your validator to the active set (via sudo)
+5. Confirm when your validator is active
+
+**No additional action required from you!** Your secret phrases stay private.
 
 ## ✨ Features
 

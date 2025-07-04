@@ -125,7 +125,7 @@ echo -e "${PURPLE}  Step 6 of 7: Generating Session Keys${NC}"
 echo -e "${PURPLE}═══════════════════════════════════════════════════════════════${NC}"
 echo
 
-./scripts/generate-session-keys.sh
+./tools/internal/generate-keys-with-restart.sh
 
 echo
 read -p "Press Enter to complete registration... " -r

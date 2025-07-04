@@ -9,6 +9,7 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
+CYAN='\033[0;36m'
 
 echo -e "${BLUE}🔑 Generating Session Keys (Secure Method)${NC}"
 echo "=========================================="
@@ -92,7 +93,7 @@ AURA_KEY="0x${SESSION_KEYS:2:64}"
 GRANDPA_KEY="0x${SESSION_KEYS:66:64}"
 
 # Create session keys file
-cat > session-keys.json << EOF
+cat > validator-data/session-keys.json << EOF
 {
     "validator_name": "$VALIDATOR_NAME",
     "session_keys": "$SESSION_KEYS",
@@ -110,12 +111,35 @@ echo
 
 # Restart validator in normal secure mode
 echo -e "${YELLOW}Restarting validator in secure mode...${NC}"
-./validate.sh start > /dev/null 2>&1
+./validate.sh start > /dev/null 2>&1 &
 
-echo -e "${GREEN}✅ Validator restarted in secure mode${NC}"
+# Wait a moment for startup
+sleep 3
+
+# Check if validator started
+if pgrep -f "fennel-node.*--validator" > /dev/null; then
+    echo -e "${GREEN}✅ Validator restarted in secure mode${NC}"
+else
+    echo -e "${YELLOW}⚠️  Validator starting in background${NC}"
+fi
 echo
-echo -e "${BLUE}💾 Keys saved to: session-keys.json${NC}"
+echo -e "${BLUE}💾 Keys saved to: validator-data/session-keys.json${NC}"
 echo
 echo -e "${YELLOW}📋 Next Steps:${NC}"
 echo "1. Run ./tools/complete-registration.sh to generate your submission"
-echo "2. Send the registration file to Fennel Labs" 
+echo "2. Send the registration file to Fennel Labs"
+
+# Add seamless flow to registration
+echo
+echo -e "${CYAN}Would you like to complete your registration now?${NC}"
+echo "This will generate all required files for Fennel Labs."
+read -p "Continue to registration? (y/n) [y]: " -n 1 -r CONTINUE_REG
+echo
+
+# Default to yes if just Enter is pressed
+if [[ -z "$CONTINUE_REG" ]] || [[ $CONTINUE_REG =~ ^[Yy]$ ]]; then
+    echo
+    # Change to main directory and run registration
+    cd "$(dirname "$0")/../.."
+    exec "./tools/complete-registration.sh"
+fi 
