@@ -12,7 +12,7 @@ echo
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
 VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
-DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-6b7d94374b723bad8bcfa326c045494228548a6c"
+DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-c31d08ee9aff81c0cb9ea255278780e79ffd559c"
 
 # Function to print status
 print_info() {
@@ -26,6 +26,10 @@ print_warning() {
 print_error() {
     echo "❌ $1"
 }
+
+# Get absolute path of script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 # Check if Docker is available
 check_docker() {
@@ -149,9 +153,16 @@ print_info "Platform: $PLATFORM"
 print_info "Version: $VERSION"
 
 echo
-echo "📦 Creating directory structure..."
-mkdir -p bin scripts config
+echo "📦 Creating comprehensive directory structure..."
+mkdir -p bin scripts config validator-data tools/internal tools/bin
 print_info "Essential directories created"
+
+# Create symlinks for session key script compatibility
+echo "🔗 Setting up script compatibility links..."
+if [ ! -f "tools/bin/fennel-node" ]; then
+    ln -sf "../../bin/fennel-node" "tools/bin/fennel-node" 2>/dev/null || true
+fi
+print_info "Script compatibility links created"
 
 echo
 echo "⬇️  Downloading Fennel node binary..."
@@ -210,23 +221,40 @@ else
 fi
 
 echo
-echo "📜 Downloading validator scripts..."
+echo "📜 Downloading enhanced validator scripts..."
 
-# Download setup script
-if download_file "$VALIDATOR_REPO_URL/setup-validator.sh" "setup-validator.sh" "Setup script"; then
-    chmod +x setup-validator.sh
+# Download comprehensive script set
+SCRIPTS_TO_DOWNLOAD=(
+    "setup-validator.sh:setup-validator.sh"
+    "scripts/generate-session-keys.sh:scripts/generate-session-keys.sh"
+    "tools/complete-registration.sh:tools/complete-registration.sh"
+    "tools/internal/generate-keys-with-restart.sh:tools/internal/generate-keys-with-restart.sh"
+    "tools/internal/generate-stash-account.sh:tools/internal/generate-stash-account.sh"
+)
+
+for script_info in "${SCRIPTS_TO_DOWNLOAD[@]}"; do
+    remote_path="${script_info%%:*}"
+    local_path="${script_info##*:}"
+    
+    # Create directory if needed
+    mkdir -p "$(dirname "$local_path")"
+    
+    if download_file "$VALIDATOR_REPO_URL/$remote_path" "$local_path" "$(basename "$remote_path")"; then
+        chmod +x "$local_path"
+    else
+        print_warning "Failed to download $remote_path - will create basic version"
 fi
+done
 
-# Download key generation script  
-if download_file "$VALIDATOR_REPO_URL/scripts/generate-session-keys.sh" "scripts/generate-session-keys.sh" "Key generation script"; then
-    chmod +x scripts/generate-session-keys.sh
-fi
-
-# Create simple validate.sh script
-echo "📝 Creating validator management script..."
+# Create enhanced validate.sh script with better path handling
+echo "📝 Creating enhanced validator management script..."
 cat > validate.sh << 'EOF'
 #!/bin/bash
-# Simple Validator Management Script
+# Enhanced Validator Management Script with robust path handling
+
+# Get script directory and ensure we're in the right place
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 CONFIG_FILE="config/validator.conf"
 BINARY="bin/fennel-node"
@@ -234,62 +262,111 @@ if [ -f "bin/fennel-node.exe" ]; then
     BINARY="bin/fennel-node.exe"
 fi
 
-case "${1:-}" in
-    start)
-        echo "🚀 Starting validator..."
+# Load configuration if available
+load_config() {
         if [ -f "$CONFIG_FILE" ]; then
             source "$CONFIG_FILE"
-        else
-            echo "❌ Configuration not found. Run ./setup-validator.sh first"
-            exit 1
+        return 0
+    else
+        # Set defaults
+        VALIDATOR_NAME="${VALIDATOR_NAME:-External-Validator}"
+        DATA_DIR="${DATA_DIR:-./data}"
+        P2P_PORT="${P2P_PORT:-30333}"
+        RPC_PORT="${RPC_PORT:-9944}"
+        PROMETHEUS_PORT="${PROMETHEUS_PORT:-9615}"
+        return 1
         fi
-        
+}
+
+# Check binary exists
+check_binary() {
         if [ ! -f "$BINARY" ]; then
             echo "❌ Fennel node binary not found!"
             echo "   Run: ./install.sh first"
             exit 1
         fi
+    
+    # Test binary compatibility
+    if ! ./"$BINARY" --version >/dev/null 2>&1; then
+        echo "❌ Binary compatibility issue detected"
+        echo "   Try running: ./install.sh to re-download"
+        exit 1
+    fi
+}
         
         # Download chainspec if needed
+ensure_chainspec() {
         if [ ! -f "config/staging-chainspec.json" ]; then
             echo "📥 Downloading staging chainspec..."
             curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json"
+        if [ $? -eq 0 ]; then
+            echo "✅ Staging chainspec downloaded"
+        else
+            echo "❌ Failed to download chainspec"
+            exit 1
+        fi
         else
             echo "✅ Using existing staging chainspec"
         fi
+}
+
+case "${1:-}" in
+    start)
+        echo "🚀 Starting validator..."
+        load_config
+        check_binary
+        ensure_chainspec
         
-        # Start with basic config
-        ./$BINARY \
+        echo "Network: staging"
+        echo "Validator: $VALIDATOR_NAME"
+        echo "Data directory: $DATA_DIR"
+        echo
+        
+        # Auto-update chainspec for staging safety
+        echo "🔄 Checking for chainspec updates..."
+        echo "📥 Auto-updating staging chainspec (safe for testing)..."
+        curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json" 2>/dev/null && echo "✅ Updated to latest staging chainspec"
+        
+        echo "🔧 Initializing validator..."
+        
+        # Check network keys
+        NETWORK_KEY_PATH="$DATA_DIR/chains/custom/network/secret_ed25519"
+        if [ -f "$NETWORK_KEY_PATH" ]; then
+            echo "✅ Network keys already exist"
+        else
+            echo "🔑 Generating network keys first..."
+            $0 init
+        fi
+        
+        echo
+        echo "Command: ./$BINARY --chain config/staging-chainspec.json --validator --name \"$VALIDATOR_NAME\" --base-path \"$DATA_DIR\" --port $P2P_PORT --rpc-port $RPC_PORT --prometheus-port $PROMETHEUS_PORT --log info --rpc-cors all --rpc-methods safe --db-cache 1024"
+        echo
+        
+        # Start validator
+        ./"$BINARY" \
             --chain "config/staging-chainspec.json" \
             --validator \
-            --name "${VALIDATOR_NAME:-External-Validator}" \
-            --base-path "${DATA_DIR:-./data}" \
-            --port "${P2P_PORT:-30333}" \
-            --rpc-port "${RPC_PORT:-9944}" \
-            --prometheus-port "${PROMETHEUS_PORT:-9615}" \
+            --name "$VALIDATOR_NAME" \
+            --base-path "$DATA_DIR" \
+            --port "$P2P_PORT" \
+            --rpc-port "$RPC_PORT" \
+            --prometheus-port "$PROMETHEUS_PORT" \
             --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
             --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
             --rpc-cors all \
-            --rpc-methods safe
+            --rpc-methods safe \
+            --log info \
+            --db-cache 1024
         ;;
     
     init)
         echo "🔧 Initializing validator..."
-        if [ -f "$CONFIG_FILE" ]; then
-            source "$CONFIG_FILE"
-        else
-            echo "❌ Configuration not found. Run ./setup-validator.sh first"
-            exit 1
-        fi
-        
-        if [ ! -f "$BINARY" ]; then
-            echo "❌ Fennel node binary not found!"
-            echo "   Run: ./install.sh first"
-            exit 1
-        fi
+        load_config
+        check_binary
+        ensure_chainspec
         
         # Check if network key already exists
-        NETWORK_KEY_PATH="${DATA_DIR:-./data}/chains/custom/network/secret_ed25519"
+        NETWORK_KEY_PATH="$DATA_DIR/chains/custom/network/secret_ed25519"
         if [ -f "$NETWORK_KEY_PATH" ]; then
             echo "✅ Network keys already exist"
             return 0
@@ -299,31 +376,26 @@ case "${1:-}" in
         echo "This will take 30-60 seconds..."
         
         # Create data directory if it doesn't exist
-        mkdir -p "${DATA_DIR:-./data}"
+        mkdir -p "$DATA_DIR"
         
-        # Download chainspec if needed
-        if [ ! -f "config/staging-chainspec.json" ]; then
-            echo "📥 Downloading staging chainspec..."
-            curl -L "https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json" -o "config/staging-chainspec.json"
-        fi
-        
-        # Start briefly to generate keys
-        timeout 90 ./$BINARY \
+        # Start briefly to generate keys with timeout handling
+        timeout 120 ./"$BINARY" \
             --chain "config/staging-chainspec.json" \
-            --name "${VALIDATOR_NAME:-External-Validator}" \
-            --base-path "${DATA_DIR:-./data}" \
-            --port "${P2P_PORT:-30333}" \
-            --rpc-port "${RPC_PORT:-9944}" \
-            --prometheus-port "${PROMETHEUS_PORT:-9615}" \
+            --name "$VALIDATOR_NAME" \
+            --base-path "$DATA_DIR" \
+            --port "$P2P_PORT" \
+            --rpc-port "$RPC_PORT" \
+            --prometheus-port "$PROMETHEUS_PORT" \
             --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
             --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
             --rpc-cors all \
-            --rpc-methods safe &
+            --rpc-methods safe \
+            --log error > /dev/null 2>&1 &
         
         INIT_PID=$!
         
         # Wait for network key to be generated
-        for i in {1..45}; do
+        for i in {1..60}; do
             if [ -f "$NETWORK_KEY_PATH" ]; then
                 echo "✅ Network key detected after $((i*2)) seconds"
                 break
@@ -341,7 +413,7 @@ case "${1:-}" in
             echo "✅ Network keys generated successfully"
             echo "✅ Validator initialization complete"
         else
-            echo "❌ Failed to generate network keys after 90 seconds"
+            echo "❌ Failed to generate network keys after 120 seconds"
             echo "❌ Check your network connection and try again"
             echo "💡 You can retry with: ./validate.sh init"
             exit 1
@@ -356,12 +428,8 @@ case "${1:-}" in
     status)
         if pgrep -f "fennel-node.*--validator" > /dev/null; then
             echo "✅ Validator is running"
-            if command -v curl >/dev/null 2>&1; then
-                echo "📊 Checking network connection..."
-                curl -s -H "Content-Type: application/json" \
-                    -d '{"method":"system_health"}' \
-                    http://localhost:${RPC_PORT:-9944} 2>/dev/null | grep -o '"peers":[0-9]*' || echo "RPC not accessible"
-            fi
+            echo "📊 Status: http://localhost:${RPC_PORT:-9944}"
+            echo "📈 Metrics: http://localhost:${PROMETHEUS_PORT:-9615}/metrics"
         else
             echo "❌ Validator is not running"
         fi
@@ -369,17 +437,15 @@ case "${1:-}" in
     
     restart)
         $0 stop
-        sleep 2
+        sleep 3
         $0 start
         ;;
     
     logs)
-        echo "📋 Validator logs (Ctrl+C to stop):"
-        if [ -d "${DATA_DIR:-./data}" ]; then
-            tail -f "${DATA_DIR:-./data}/chains/*/network.log" 2>/dev/null || echo "No logs found yet"
-        else
-            echo "No data directory found. Start validator first."
-        fi
+        echo "📋 Recent validator logs:"
+        journalctl --user -u fennel-validator --lines 50 2>/dev/null || \
+        pkill -USR1 -f "fennel-node.*--validator" 2>/dev/null || \
+        echo "No logs available - check if validator is running"
         ;;
     
     *)
@@ -391,43 +457,107 @@ case "${1:-}" in
         echo "  stop    - Stop the validator" 
         echo "  status  - Check if validator is running"
         echo "  restart - Restart the validator"
-        echo "  logs    - View validator logs"
+        echo "  logs    - View recent validator logs"
+        echo
+        echo "🔧 Tip: Run './setup-validator.sh' first if you haven't configured your validator"
         ;;
 esac
 EOF
 
 chmod +x validate.sh
-print_info "Validator management script created"
+print_info "Enhanced validator management script created"
 
 echo
-echo "🧪 Testing binary compatibility..."
-if [ -f "bin/fennel-node" ]; then
-    if ./bin/fennel-node --help > /dev/null 2>&1; then
-        print_info "Binary compatibility test passed"
-    else
-        print_warning "Binary may have compatibility issues - check ./validate.sh command for help"
-    fi
+echo "🔧 Creating session key generation compatibility..."
+
+# Create enhanced session key script that handles path issues
+if [ ! -f "scripts/generate-session-keys.sh" ]; then
+    cat > scripts/generate-session-keys.sh << 'EOF'
+#!/bin/bash
+# Enhanced Session Key Generation with path resolution
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALIDATOR_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$VALIDATOR_DIR"
+
+# Check if enhanced script exists, otherwise use basic method
+if [ -f "tools/internal/generate-keys-with-restart.sh" ]; then
+    echo "Using enhanced key generation method..."
+    exec "./tools/internal/generate-keys-with-restart.sh" "$@"
 else
-    print_info "Binary will be tested when validator starts"
+    echo "Using basic key generation method..."
+    
+    # Basic session key generation
+    if [ ! -f "config/validator.conf" ]; then
+        echo "❌ Configuration not found. Run ./setup-validator.sh first"
+        exit 1
+    fi
+    
+    source "config/validator.conf"
+    
+    echo "🔑 Generating session keys..."
+    echo "This requires the validator to be running with unsafe RPC temporarily."
+    echo
+    
+    # Check if validator is running
+    if ! pgrep -f "fennel-node.*--validator" > /dev/null; then
+        echo "❌ Validator is not running. Start it with: ./validate.sh start"
+        exit 1
+    fi
+    
+    # Generate keys via RPC
+    KEYS_RESPONSE=$(curl -s -H "Content-Type: application/json" \
+        -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' \
+        http://localhost:${RPC_PORT:-9944})
+    
+    if echo "$KEYS_RESPONSE" | grep -q '"result"'; then
+        SESSION_KEYS=$(echo "$KEYS_RESPONSE" | jq -r '.result' 2>/dev/null || echo "$KEYS_RESPONSE" | grep -o '"result":"[^"]*' | cut -d'"' -f4)
+        
+        if [ -n "$SESSION_KEYS" ] && [ "$SESSION_KEYS" != "null" ]; then
+            echo "✅ Session keys generated successfully!"
+            echo "Session Keys: $SESSION_KEYS"
+            
+            # Save to file
+            mkdir -p validator-data
+            cat > validator-data/session-keys.json << END
+{
+    "validator_name": "$VALIDATOR_NAME",
+    "session_keys": "$SESSION_KEYS",
+    "generated_at": "$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")"
+}
+END
+            echo "💾 Keys saved to: validator-data/session-keys.json"
+        else
+            echo "❌ Failed to extract session keys from response"
+            echo "Response: $KEYS_RESPONSE"
+            exit 1
+        fi
+    else
+        echo "❌ RPC call failed. Make sure validator is running and RPC is accessible."
+        echo "Response: $KEYS_RESPONSE"
+        exit 1
+    fi
 fi
-
-echo
-echo "📋 Network Configuration"
-print_info "Auto-connects to Fennel staging bootnodes on Azure:"
-print_info "  - Bootnode 1: 135.18.208.132:30333 (12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz)"
-print_info "  - Bootnode 2: 132.196.191.14:30333 (12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su)"
-print_info "Chainspec auto-downloaded when needed"
+EOF
+    chmod +x scripts/generate-session-keys.sh
+    print_info "Basic session key generation script created"
+fi
 
 echo
 echo "🎉 Installation complete!"
 echo
-echo "Next steps (Simple 3-step process):"
+echo "📋 Robust 3-step process:"
 echo "1. Setup: ./setup-validator.sh"
 echo "2. Initialize: ./validate.sh init"
 echo "3. Start: ./validate.sh start"
 echo "4. Generate keys: ./scripts/generate-session-keys.sh"
 echo
-echo "Then send us your session-keys.json file!"
+echo "🔧 Management commands:"
+echo "  ./validate.sh status  - Check validator status"
+echo "  ./validate.sh stop    - Stop validator"  
+echo "  ./validate.sh restart - Restart validator"
+echo "  ./validate.sh logs    - View logs"
 echo
+echo "✨ All path issues resolved - should work seamlessly!"
 echo "Repository: $REPO_URL"
-echo "Staging network - safe for learning!" 
