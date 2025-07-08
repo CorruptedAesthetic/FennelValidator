@@ -48,6 +48,7 @@ backups/
 
 # Temporary files
 *.tmp
+temp_binary_path.txt
 
 # Oracle Cloud Infrastructure configuration (sensitive credentials)
 oci-config/
@@ -84,6 +85,10 @@ bin/fennel-node
 bin/fennel-node.exe
 bin/fennel-node.backup.*
 bin/README.md
+bin/BUILD_INSTRUCTIONS.md
+
+# Symlinks to binaries
+tools/bin/fennel-node
 
 # Generated configuration
 config/validator.conf.backup.*
@@ -92,6 +97,7 @@ config/validator.conf.backup.*
 config/staging-chainspec.json
 config/mainnet-chainspec.json
 config/staging-chainspec.json.tmp
+config/fennel-staging.raw.json
 
 # Validator data directory (contains keys and blockchain data)
 data/

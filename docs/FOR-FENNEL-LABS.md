@@ -118,14 +118,14 @@ sudo.sudo(validatorManager.addValidator(stash_account))
    - **Call**: `sudo`
 
 3. **Fill Parameters:**
-   - **call: Call**: Select `validatorManager → addValidator`
-   - **validator**: `[stash_account_address_from_submission]`
+   - **call: Call**: Select `validatorManager → registerValidators`
+   - **validator (0: AccountId32)**: `[stash_account_address_from_submission]`
 
 4. **Submit:**
    - Click **"Submit Transaction"**
    - Sign and submit the transaction
 
-*Note: The Fennel network uses a custom `validatorManager` pallet for validator set management. The exact pallet name should match what appears in your Polkadot.js Apps interface.*
+*Note: The Fennel network uses a custom `validatorManager` pallet for validator set management. The exact pallet name and parameter format should match what appears in your Polkadot.js Apps interface.*
 
 ---
 
@@ -149,8 +149,8 @@ sudo.sudoAs(
 #### **Step 4 Example (updated for Fennel):**
 ```
 sudo.sudo(
-  call: validatorManager.addValidator(
-    validator: 5HgFtarhbicYc45S9vwSTqX8uStPzs7b1H7NnMF5MQ3xBRD9
+  call: validatorManager.registerValidators(
+    validator (0: AccountId32): 5HgFtarhbicYc45S9vwSTqX8uStPzs7b1H7NnMF5MQ3xBRD9
   )
 )
 ```
@@ -358,3 +358,34 @@ curl -H "Content-Type: application/json" -d '{
 *Note: RPC method requires constructing and signing extrinsics manually. Use Polkadot.js Apps for simpler workflow.*
 
 ---
+
+## 🔄 **Alternative Methods for Adding Validators**
+
+### **Method 1: Current Method (Recommended)**
+```bash
+sudo.sudo(validatorManager.registerValidators(validator))
+```
+
+### **Method 2: Direct Session Management**
+```bash
+# If validatorManager is not available
+sudo.sudo(session.forceNewSession())  # After binding keys
+```
+
+### **Method 3: Batch Operation**
+```bash
+# Combine multiple operations
+sudo.sudo(utility.batch([
+  session.setKeys(keys, proof),
+  validatorManager.registerValidators(validator)
+]))
+```
+
+### **Method 4: Check Available Pallets**
+To see what methods are available in your runtime:
+1. Go to **Developer** → **Chain State**
+2. Check available pallets: `session`, `validatorManager`, `staking`, `collective`
+3. Go to **Developer** → **Extrinsics**
+4. Explore available calls for each pallet
+
+**Note: Stick with `validatorManager.registerValidators` unless you have specific requirements for alternative methods.**

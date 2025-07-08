@@ -38,10 +38,15 @@ check_docker() {
             return 0
         else
             print_warning "Docker is installed but not running"
+            echo "💡 Try: sudo systemctl start docker"
             return 1
         fi
     else
         print_warning "Docker is not installed"
+        echo "💡 Docker installation options:"
+        echo "   Oracle Linux: sudo yum install -y docker"
+        echo "   Ubuntu/Debian: sudo apt-get install -y docker.io"
+        echo "   Alternative: This script will try release download as fallback"
         return 1
     fi
 }
@@ -70,11 +75,42 @@ extract_binary_from_docker() {
             
             # Try common binary locations
             for path in "/usr/local/bin/fennel-node" "/usr/bin/fennel-node" "/fennel-node" "/app/fennel-node" "/target/release/fennel-node"; do
-                if docker cp "$CONTAINER_ID:$path" "bin/fennel-node" 2>/dev/null; then
-                    docker rm "$CONTAINER_ID" >/dev/null 2>&1
-                    chmod +x "bin/fennel-node"
-                    print_info "Binary extracted from Docker image ($image) and ready for use"
-                    return 0
+                if docker cp "$CONTAINER_ID:$path" "bin/fennel-node-temp" 2>/dev/null; then
+                    # Handle case where extraction creates a directory instead of a file
+                    if [ -d "bin/fennel-node-temp" ]; then
+                        echo "🔧 Extracted directory, looking for binary inside..."
+                        FOUND_BINARY=$(find "bin/fennel-node-temp" -name "fennel-node" -type f 2>/dev/null | head -1)
+                        if [ -n "$FOUND_BINARY" ]; then
+                            mv "$FOUND_BINARY" "bin/fennel-node"
+                            rm -rf "bin/fennel-node-temp"
+                            chmod +x "bin/fennel-node"
+                            docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                            # Verify the binary works
+                            if ./bin/fennel-node --version >/dev/null 2>&1; then
+                                print_info "Binary extracted from Docker image ($image) and verified working"
+                                return 0
+                            else
+                                print_warning "Binary extracted but verification failed, trying next option..."
+                                rm -f "bin/fennel-node"
+                                return 1
+                            fi
+                        else
+                            rm -rf "bin/fennel-node-temp"
+                        fi
+                    elif [ -f "bin/fennel-node-temp" ]; then
+                        mv "bin/fennel-node-temp" "bin/fennel-node"
+                        chmod +x "bin/fennel-node"
+                        docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                        # Verify the binary works
+                        if ./bin/fennel-node --version >/dev/null 2>&1; then
+                            print_info "Binary extracted from Docker image ($image) and verified working"
+                            return 0
+                        else
+                            print_warning "Binary extracted but verification failed, trying next option..."
+                            rm -f "bin/fennel-node"
+                            return 1
+                        fi
+                    fi
                 fi
             done
             
@@ -83,12 +119,42 @@ extract_binary_from_docker() {
             if docker export "$CONTAINER_ID" | tar -tf - | grep -E "fennel-node$" | head -1 > temp_binary_path.txt 2>/dev/null; then
                 BINARY_PATH=$(cat temp_binary_path.txt)
                 if [ -n "$BINARY_PATH" ]; then
-                    if docker cp "$CONTAINER_ID:/$BINARY_PATH" "bin/fennel-node" 2>/dev/null; then
-                        docker rm "$CONTAINER_ID" >/dev/null 2>&1
-                        chmod +x "bin/fennel-node"
-                        rm -f temp_binary_path.txt
-                        print_info "Binary found at $BINARY_PATH and extracted successfully"
-                        return 0
+                    if docker cp "$CONTAINER_ID:/$BINARY_PATH" "bin/fennel-node-temp" 2>/dev/null; then
+                        # Handle extraction result properly
+                        if [ -d "bin/fennel-node-temp" ]; then
+                            FOUND_BINARY=$(find "bin/fennel-node-temp" -name "fennel-node" -type f 2>/dev/null | head -1)
+                            if [ -n "$FOUND_BINARY" ]; then
+                                mv "$FOUND_BINARY" "bin/fennel-node"
+                                rm -rf "bin/fennel-node-temp"
+                                chmod +x "bin/fennel-node"
+                                docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                                rm -f temp_binary_path.txt
+                                # Verify the binary works
+                                if ./bin/fennel-node --version >/dev/null 2>&1; then
+                                    print_info "Binary found at $BINARY_PATH and verified working"
+                                    return 0
+                                else
+                                    print_warning "Binary found but verification failed"
+                                    rm -f "bin/fennel-node"
+                                    return 1
+                                fi
+                            fi
+                            rm -rf "bin/fennel-node-temp"
+                        elif [ -f "bin/fennel-node-temp" ]; then
+                            mv "bin/fennel-node-temp" "bin/fennel-node"
+                            chmod +x "bin/fennel-node"
+                            docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                            rm -f temp_binary_path.txt
+                            # Verify the binary works
+                            if ./bin/fennel-node --version >/dev/null 2>&1; then
+                                print_info "Binary found at $BINARY_PATH and verified working"
+                                return 0
+                            else
+                                print_warning "Binary found but verification failed"
+                                rm -f "bin/fennel-node"
+                                return 1
+                            fi
+                        fi
                     fi
                 fi
                 rm -f temp_binary_path.txt
@@ -189,18 +255,26 @@ echo "⬇️  Getting Fennel node binary..."
 BINARY_DOWNLOADED=false
 
 # Try Docker first (most reliable method for Fennel)
+echo "🎯 Primary method: Docker image extraction"
 if check_docker; then
-    echo "🐳 Using Docker to extract binary (primary method)..."
+    echo "🐳 Using Docker to extract binary (recommended method)..."
+    echo "🎯 Using specific SHA image for consistency: sha-3fb1b156c14d912798d09f935bd5550a4d131346"
     if extract_binary_from_docker; then
         BINARY_DOWNLOADED=true
+        print_info "✅ Successfully extracted binary from Docker image!"
+    else
+        print_error "❌ Docker extraction failed despite Docker being available"
     fi
 else
-    print_warning "Docker not available - will try alternative methods"
+    print_warning "🐳 Docker not available - this is the preferred method for binary extraction"
+    echo "💡 For best results, install Docker and re-run this script"
 fi
 
 # Only try release download if Docker completely fails
 if [ "$BINARY_DOWNLOADED" = false ]; then
-    print_warning "Docker extraction failed, trying release download as fallback..."
+    echo
+    print_warning "🔄 Fallback method: GitHub release download"
+    echo "⚠️  Note: Docker extraction is more reliable for Fennel validator"
     
     # Get latest release info
     LATEST_RELEASE=$(curl -s https://api.github.com/repos/CorruptedAesthetic/fennel-solonet/releases/latest 2>/dev/null)
@@ -325,6 +399,7 @@ done
 if [ ! -f "scripts/generate-session-keys.sh" ]; then
     mkdir -p scripts
     echo "📝 Creating basic session key generation script..."
+fi
 
 # Create enhanced validate.sh script with better path handling
 echo "📝 Creating enhanced validator management script..."
