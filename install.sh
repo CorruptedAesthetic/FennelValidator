@@ -11,19 +11,7 @@ echo
 
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
-        # Start briefly to generate keys with timeout handling
-        timeout 120 ./"$BINARY" \
-            --chain "config/staging-chainspec.json" \
-            --name "$VALIDATOR_NAME" \
-            --base-path "$DATA_DIR" \
-            --port "$P2P_PORT" \
-            --rpc-port "$RPC_PORT" \
-            --prometheus-port "$PROMETHEUS_PORT" \
-            --bootnodes="/dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
-            --bootnodes="/dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
-            --rpc-cors all \
-            --rpc-methods safe \
-            --log error > /dev/null 2>&1 &O_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
+VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
 DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-3fb1b156c14d912798d09f935bd5550a4d131346"
 
 # Function to print status
@@ -62,38 +50,57 @@ check_docker() {
 extract_binary_from_docker() {
     echo "🐳 Extracting fennel-node binary from Docker image..."
     
-    # Create temporary container and copy binary
-    CONTAINER_ID=$(docker create "$DOCKER_IMAGE" 2>/dev/null)
-    if [ $? -eq 0 ]; then
-        # Try common binary locations
-        for path in "/usr/local/bin/fennel-node" "/usr/bin/fennel-node" "/fennel-node"; do
-            if docker cp "$CONTAINER_ID:$path" "bin/fennel-node" 2>/dev/null; then
-                docker rm "$CONTAINER_ID" >/dev/null 2>&1
-                chmod +x "bin/fennel-node"
-                print_info "Binary extracted from Docker image and ready for use"
-                return 0
-            fi
-        done
+    # Try the specific SHA first, then fall back to latest
+    local images=("$DOCKER_IMAGE" "ghcr.io/corruptedaesthetic/fennel-solonet:latest")
+    
+    for image in "${images[@]}"; do
+        echo "📥 Trying Docker image: $image"
         
-        # If direct paths don't work, find the binary
-        docker cp "$CONTAINER_ID:/" "temp_extract" 2>/dev/null
-        if [ -d "temp_extract" ]; then
-            BINARY_PATH=$(find temp_extract -name "fennel-node" -type f 2>/dev/null | head -1)
-            if [ -n "$BINARY_PATH" ]; then
-                cp "$BINARY_PATH" "bin/fennel-node"
-                chmod +x "bin/fennel-node"
-                rm -rf temp_extract
-                docker rm "$CONTAINER_ID" >/dev/null 2>&1
-                print_info "Binary found and extracted successfully"
-                return 0
-            fi
-            rm -rf temp_extract
+        # Pull the image first
+        if docker pull "$image" >/dev/null 2>&1; then
+            echo "✅ Successfully pulled $image"
+        else
+            echo "⚠️  Failed to pull $image, trying with existing local image..."
         fi
         
-        docker rm "$CONTAINER_ID" >/dev/null 2>&1
-    fi
+        # Create temporary container and copy binary
+        CONTAINER_ID=$(docker create "$image" 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            echo "🔍 Searching for fennel-node binary in container..."
+            
+            # Try common binary locations
+            for path in "/usr/local/bin/fennel-node" "/usr/bin/fennel-node" "/fennel-node" "/app/fennel-node" "/target/release/fennel-node"; do
+                if docker cp "$CONTAINER_ID:$path" "bin/fennel-node" 2>/dev/null; then
+                    docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                    chmod +x "bin/fennel-node"
+                    print_info "Binary extracted from Docker image ($image) and ready for use"
+                    return 0
+                fi
+            done
+            
+            # If direct paths don't work, search the entire container
+            echo "🔍 Performing deep search for binary..."
+            if docker export "$CONTAINER_ID" | tar -tf - | grep -E "fennel-node$" | head -1 > temp_binary_path.txt 2>/dev/null; then
+                BINARY_PATH=$(cat temp_binary_path.txt)
+                if [ -n "$BINARY_PATH" ]; then
+                    if docker cp "$CONTAINER_ID:/$BINARY_PATH" "bin/fennel-node" 2>/dev/null; then
+                        docker rm "$CONTAINER_ID" >/dev/null 2>&1
+                        chmod +x "bin/fennel-node"
+                        rm -f temp_binary_path.txt
+                        print_info "Binary found at $BINARY_PATH and extracted successfully"
+                        return 0
+                    fi
+                fi
+                rm -f temp_binary_path.txt
+            fi
+            
+            docker rm "$CONTAINER_ID" >/dev/null 2>&1
+        fi
+        
+        echo "⚠️  Failed to extract from $image, trying next option..."
+    done
     
-    print_error "Failed to extract binary from Docker image"
+    print_error "Failed to extract binary from any Docker image"
     return 1
 }
 
@@ -177,32 +184,61 @@ fi
 print_info "Script compatibility links created"
 
 echo
-echo "⬇️  Downloading Fennel node binary..."
-# Try to download from GitHub releases first
-BINARY_NAME="fennel-node"
-if [[ "$PLATFORM" == *"windows"* ]]; then
-    BINARY_NAME="fennel-node.exe"
-fi
+echo "⬇️  Getting Fennel node binary..."
 
-DOWNLOAD_URL="$RELEASES_URL/download/$VERSION/$BINARY_NAME"
 BINARY_DOWNLOADED=false
 
-if curl -s --head "$DOWNLOAD_URL" 2>/dev/null | head -n 1 | grep -q "200 OK"; then
-    if download_file "$DOWNLOAD_URL" "bin/fennel-node$ext" "Fennel node binary"; then
-        chmod +x "bin/fennel-node$ext"
-        print_info "Binary ready for use"
+# Try Docker first (most reliable method for Fennel)
+if check_docker; then
+    echo "🐳 Using Docker to extract binary (primary method)..."
+    if extract_binary_from_docker; then
         BINARY_DOWNLOADED=true
     fi
+else
+    print_warning "Docker not available - will try alternative methods"
 fi
 
-# If binary download failed, try Docker extraction
+# Only try release download if Docker completely fails
 if [ "$BINARY_DOWNLOADED" = false ]; then
-    print_warning "Pre-built binary not available for $PLATFORM"
+    print_warning "Docker extraction failed, trying release download as fallback..."
     
-    if check_docker; then
-        echo "🐳 Attempting to extract binary from Docker image..."
-        if extract_binary_from_docker; then
-            BINARY_DOWNLOADED=true
+    # Get latest release info
+    LATEST_RELEASE=$(curl -s https://api.github.com/repos/CorruptedAesthetic/fennel-solonet/releases/latest 2>/dev/null)
+    
+    if [ -n "$LATEST_RELEASE" ]; then
+        # Try to find binary asset in latest release
+        ASSET_NAME=$(echo "$LATEST_RELEASE" | grep -o '"name": "[^"]*fennel-node[^"]*"' | head -1 | cut -d'"' -f4)
+        if [ -n "$ASSET_NAME" ]; then
+            DOWNLOAD_URL="$RELEASES_URL/latest/download/$ASSET_NAME"
+            echo "📦 Found release asset: $ASSET_NAME"
+            
+            if download_file "$DOWNLOAD_URL" "bin/$ASSET_NAME" "Fennel node binary package"; then
+                # Extract if it's a tar.gz
+                if [[ "$ASSET_NAME" == *.tgz ]] || [[ "$ASSET_NAME" == *.tar.gz ]]; then
+                    echo "📂 Extracting binary from archive..."
+                    cd bin
+                    tar -xzf "$ASSET_NAME" 2>/dev/null || tar -xf "$ASSET_NAME" 2>/dev/null
+                    # Find the binary in extracted files
+                    if [ -f "fennel-node" ]; then
+                        chmod +x "fennel-node"
+                        rm -f "$ASSET_NAME"
+                        print_info "Binary extracted and ready for use"
+                        BINARY_DOWNLOADED=true
+                    elif find . -name "fennel-node" -type f 2>/dev/null | head -1 | xargs -I {} mv {} . 2>/dev/null; then
+                        chmod +x "fennel-node"
+                        rm -f "$ASSET_NAME"
+                        print_info "Binary found and extracted successfully"
+                        BINARY_DOWNLOADED=true
+                    fi
+                    cd ..
+                else
+                    # Direct binary file
+                    mv "bin/$ASSET_NAME" "bin/fennel-node"
+                    chmod +x "bin/fennel-node"
+                    print_info "Binary ready for use"
+                    BINARY_DOWNLOADED=true
+                fi
+            fi
         fi
     fi
 fi
@@ -224,39 +260,71 @@ if [ "$BINARY_DOWNLOADED" = false ]; then
 fi
 
 echo
-echo "📥 Downloading staging chainspec..."
+echo "📥 Downloading Fennel staging chainspec..."
+echo "⚠️  This is a large file (~3.7MB) and may take a moment..."
+
 CHAINSPEC_URL="https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json"
-if download_file "$CHAINSPEC_URL" "config/staging-chainspec.json" "Staging chainspec"; then
-    print_info "Staging chainspec ready for use"
+CHAINSPEC_DOWNLOADED=false
+
+# Try multiple download methods
+if command -v curl > /dev/null; then
+    echo "🌐 Downloading with curl..."
+    if curl -L --connect-timeout 30 --max-time 300 "$CHAINSPEC_URL" -o "config/staging-chainspec.json" 2>/dev/null; then
+        # Verify the file is valid JSON and not empty
+        if [ -s "config/staging-chainspec.json" ] && jq . "config/staging-chainspec.json" >/dev/null 2>&1; then
+            print_info "Staging chainspec downloaded and validated"
+            CHAINSPEC_DOWNLOADED=true
+        else
+            print_warning "Downloaded chainspec appears invalid, retrying..."
+            rm -f "config/staging-chainspec.json"
+        fi
+    fi
+elif command -v wget > /dev/null; then
+    echo "🌐 Downloading with wget..."
+    if wget --timeout=300 "$CHAINSPEC_URL" -O "config/staging-chainspec.json" 2>/dev/null; then
+        if [ -s "config/staging-chainspec.json" ] && jq . "config/staging-chainspec.json" >/dev/null 2>&1; then
+            print_info "Staging chainspec downloaded and validated"
+            CHAINSPEC_DOWNLOADED=true
+        else
+            print_warning "Downloaded chainspec appears invalid"
+            rm -f "config/staging-chainspec.json"
+        fi
+    fi
 else
-    print_warning "Chainspec download failed - will retry when starting validator"
+    print_error "Neither curl nor wget found for chainspec download"
+fi
+
+if [ "$CHAINSPEC_DOWNLOADED" = false ]; then
+    print_warning "Chainspec download failed - validator will try to download it at startup"
+    echo "💡 You can manually download it later with:"
+    echo "   curl -L '$CHAINSPEC_URL' -o config/staging-chainspec.json"
 fi
 
 echo
-echo "📜 Downloading enhanced validator scripts..."
+echo "📜 Setting up validator scripts..."
 
-# Download comprehensive script set
-SCRIPTS_TO_DOWNLOAD=(
-    "setup-validator.sh:setup-validator.sh"
-    "scripts/generate-session-keys.sh:scripts/generate-session-keys.sh"
-    "tools/complete-registration.sh:tools/complete-registration.sh"
-    "tools/internal/generate-keys-with-restart.sh:tools/internal/generate-keys-with-restart.sh"
-    "tools/internal/generate-stash-account.sh:tools/internal/generate-stash-account.sh"
-)
+# Since this is being run from the cloned repository, all scripts should already exist
+# Just make sure they're executable and verify they exist
 
-for script_info in "${SCRIPTS_TO_DOWNLOAD[@]}"; do
-    remote_path="${script_info%%:*}"
-    local_path="${script_info##*:}"
-    
-    # Create directory if needed
-    mkdir -p "$(dirname "$local_path")"
-    
-    if download_file "$VALIDATOR_REPO_URL/$remote_path" "$local_path" "$(basename "$remote_path")"; then
-        chmod +x "$local_path"
+# Make existing scripts executable
+for script in setup-validator.sh validate.sh start.sh; do
+    if [ -f "$script" ]; then
+        chmod +x "$script"
+        print_info "$script is ready"
     else
-        print_warning "Failed to download $remote_path - will create basic version"
-fi
+        print_warning "$script not found - this may be expected if running from a different location"
+    fi
 done
+
+# Make scripts in subdirectories executable
+find scripts tools -name "*.sh" -type f 2>/dev/null | while read script; do
+    chmod +x "$script"
+done
+
+# Check if essential scripts exist, create basic versions if missing
+if [ ! -f "scripts/generate-session-keys.sh" ]; then
+    mkdir -p scripts
+    echo "📝 Creating basic session key generation script..."
 
 # Create enhanced validate.sh script with better path handling
 echo "📝 Creating enhanced validator management script..."

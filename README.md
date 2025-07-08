@@ -206,6 +206,149 @@ cd FennelValidator
 ./start.sh
 ```
 
+## 🐳 Docker Deployment (Recommended for Production)
+
+### Field-Tested Oracle Cloud Setup
+
+This is the recommended approach for production deployments, especially on Oracle Cloud:
+
+#### Prerequisites
+- Oracle Cloud VM (2 vCPUs, 4GB RAM, 100GB storage)
+- Ubuntu 22.04 LTS
+- Docker installed
+- Ports 30333, 30334, 9933, 9944 open
+
+#### Step-by-Step Setup
+
+**1. System Preparation**
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+sudo apt install -y docker.io
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER
+
+# Install tools
+sudo apt install -y curl jq git
+
+# Log out and back in for Docker permissions
+```
+
+**2. Validator Setup**
+```bash
+# Clone repository
+git clone https://github.com/CorruptedAesthetic/FennelValidator.git
+cd FennelValidator
+
+# Run streamlined installer
+./install-fixed.sh
+
+# This will:
+# - Create directory structure
+# - Download fennel-node binary
+# - Download latest chainspec
+# - Set proper permissions
+```
+
+**3. Configuration**
+```bash
+# Edit validator settings
+nano config/validator.conf
+
+# Key settings:
+# - node_name: Your validator display name
+# - pruning: 256 (for validators)
+# - enable_rpc: true (for key generation)
+```
+
+**4. Generate Session Keys**
+```bash
+# Generate keys (required for validation)
+./scripts/generate-session-keys.sh
+
+# Keys will be saved to validator-data/session-keys.json
+```
+
+**5. Docker Deployment**
+```bash
+# Run validator with Docker
+docker run -d \
+  --name fennel-validator \
+  --restart unless-stopped \
+  -p 30333:30333 \
+  -p 30334:30334 \
+  -p 9933:9933 \
+  -p 9944:9944 \
+  -v $(pwd)/validator-data:/data \
+  -v $(pwd)/config/fennel-staging.raw.json:/chainspec.json \
+  ghcr.io/corruptedaesthetic/fennel-solonet:latest \
+  --chain /chainspec.json \
+  --base-path /data \
+  --port 30333 \
+  --ws-port 9944 \
+  --rpc-port 9933 \
+  --rpc-cors all \
+  --validator \
+  --name "YourValidatorName" \
+  --pruning 256 \
+  --bootnodes /dns/staging-bootnode.fennel.labs/tcp/30333/p2p/12D3KooWJgbJ4kVQJfxuBzjbLrBRXCwZDwrfLWgkFvbHtfDgC6vS
+```
+
+**6. Monitoring & Validation**
+```bash
+# Check logs
+docker logs -f fennel-validator
+
+# Check sync status
+curl -H "Content-Type: application/json" \
+  -d '{"id":1, "jsonrpc":"2.0", "method": "system_health", "params":[]}' \
+  http://localhost:9933
+
+# Monitor resources
+docker stats fennel-validator
+```
+
+**7. Session Key Registration**
+1. Visit [Polkadot.js Apps](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944)
+2. Connect to your validator: `ws://YOUR_IP:9944`
+3. Go to Developer > RPC calls
+4. Select `author` > `rotateKeys`
+5. Execute and copy the result
+6. Go to Network > Staking > Account actions
+7. Bond tokens and set session keys
+
+**8. Maintenance**
+```bash
+# Update chainspec
+curl -L https://raw.githubusercontent.com/CorruptedAesthetic/fennel-solonet/main/chainspecs/staging/staging-raw.json -o config/fennel-staging.raw.json
+docker restart fennel-validator
+
+# Update validator
+docker pull ghcr.io/corruptedaesthetic/fennel-solonet:latest
+docker stop fennel-validator
+docker rm fennel-validator
+# Re-run docker run command
+```
+
+### Why Docker?
+- **Consistency**: Same environment everywhere
+- **Updates**: Easy to update to new versions
+- **Isolation**: Process isolation and resource limits
+- **Reliability**: Automatic restarts and health checks
+- **Portability**: Works on any cloud provider
+
+### Traditional Installation vs Docker
+
+| Feature | Traditional | Docker |
+|---------|-------------|---------|
+| Setup Time | 15-30 minutes | 5-10 minutes |
+| Updates | Manual rebuild | `docker pull` |
+| Consistency | Variable | Guaranteed |
+| Isolation | System-wide | Containerized |
+| Portability | OS-specific | Universal |
+
 ## 🚨 Security & Best Practices
 
 **Built-in Security Features:**
