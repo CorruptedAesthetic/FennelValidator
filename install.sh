@@ -11,8 +11,20 @@ echo
 
 REPO_URL="https://github.com/CorruptedAesthetic/fennel-solonet"
 RELEASES_URL="$REPO_URL/releases"
-VALIDATOR_REPO_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
-DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-c31d08ee9aff81c0cb9ea255278780e79ffd559c"
+        # Start briefly to generate keys with timeout handling
+        timeout 120 ./"$BINARY" \
+            --chain "config/staging-chainspec.json" \
+            --name "$VALIDATOR_NAME" \
+            --base-path "$DATA_DIR" \
+            --port "$P2P_PORT" \
+            --rpc-port "$RPC_PORT" \
+            --prometheus-port "$PROMETHEUS_PORT" \
+            --bootnodes="/dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
+            --bootnodes="/dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
+            --rpc-cors all \
+            --rpc-methods safe \
+            --log error > /dev/null 2>&1 &O_URL="https://raw.githubusercontent.com/CorruptedAesthetic/FennelValidator/main"
+DOCKER_IMAGE="ghcr.io/corruptedaesthetic/fennel-solonet:sha-3fb1b156c14d912798d09f935bd5550a4d131346"
 
 # Function to print status
 print_info() {
@@ -351,8 +363,8 @@ case "${1:-}" in
             --port "$P2P_PORT" \
             --rpc-port "$RPC_PORT" \
             --prometheus-port "$PROMETHEUS_PORT" \
-            --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
-            --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
+            --bootnodes="/dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
+            --bootnodes="/dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
             --rpc-cors all \
             --rpc-methods safe \
             --log info \
@@ -386,8 +398,8 @@ case "${1:-}" in
             --port "$P2P_PORT" \
             --rpc-port "$RPC_PORT" \
             --prometheus-port "$PROMETHEUS_PORT" \
-            --bootnodes="/ip4/135.18.208.132/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
-            --bootnodes="/ip4/132.196.191.14/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
+            --bootnodes="/dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWS84f71ufMQRsm9YWynfK5Zxa6iSooStJECnAT3RBVVxz" \
+            --bootnodes="/dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWLWzcGVuLycfL1W83yc9S4UmVJ8qBd4Rk5mS6RJ4Bh7Su" \
             --rpc-cors all \
             --rpc-methods safe \
             --log error > /dev/null 2>&1 &

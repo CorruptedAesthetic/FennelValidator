@@ -1,33 +1,285 @@
-# Frequently Asked Questions
+# 🤔 Frequently Asked Questions - Fennel Validator
 
-## General Questions
+## 🚀 Getting Started
 
-### Q: Do I need technical experience?
-**A:** No! Just run `./start.sh` and follow the interactive prompts. Everything is automated.
+### Q: I'm completely new to blockchain. Can I still run a validator?
+**A:** Absolutely! Our setup is designed for beginners:
+1. Download the repository
+2. Run `./install.sh`
+3. Run `./setup-validator.sh`
+4. Run `./validate.sh start`
 
-### Q: How long does setup take?
-**A:** About 5-10 minutes for the complete setup.
+Follow the prompts - everything is automated and explained step-by-step.
 
-### Q: What are the system requirements?
+### Q: How long does the complete setup take?
 **A:** 
-- Linux or macOS (Windows with WSL2)
-- 4GB RAM minimum
-- 50GB free disk space
-- Stable internet connection
+- **Download & Install**: 5-10 minutes
+- **Configuration**: 5 minutes (answering prompts)
+- **Initial Sync**: 15-30 minutes (blockchain download)
+- **Registration**: 5 minutes (generating files)
 
-### Q: Is it safe?
-**A:** Yes! The scripts automatically:
-- Configure firewall rules
-- Secure your keys with proper permissions
-- Only share public information with Fennel Labs
-- Keep your secret phrases private
+**Total**: About 45 minutes to fully operational validator.
 
-## Setup Questions
+### Q: What are the minimum system requirements?
+**A:** 
+- **OS**: Linux, macOS, or Windows (with WSL2)
+- **CPU**: 2 cores minimum (any modern computer)
+- **Memory**: 4GB RAM (8GB recommended)
+- **Storage**: 50GB free space (SSD recommended)
+- **Network**: Stable internet, port 30333 accessible
 
-### Q: How do I set up a validator?
-**A:** Just run `./start.sh` - it detects first-time setup and guides you through everything.
+### Q: Is it safe for beginners?
+**A:** Yes! Security is built-in:
+- ✅ **Automatic firewall** configuration
+- ✅ **File permissions** secured automatically
+- ✅ **No manual key sharing** - Fennel Labs handles registration
+- ✅ **Local-only RPC** access by default
+- ✅ **Safe defaults** for all options
 
-### Q: What if something goes wrong during setup?
+## 📦 Installation & Setup
+
+### Q: Do I need to install anything before starting?
+**A:** Minimal requirements (usually pre-installed):
+- `curl` and `wget` for downloads
+- `git` for repository cloning (optional)
+- Internet connection
+
+Our `install.sh` script handles everything else automatically.
+
+### Q: Can I run multiple validators on the same machine?
+**A:** Not recommended for beginners. Each validator needs:
+- Unique ports (30333, 9944, 9615)
+- Separate data directories
+- Different validator names
+
+Better to start with one validator and learn the basics first.
+
+### Q: What if the installation fails?
+**A:** 
+1. **Check internet connection**: Download requires stable internet
+2. **Run diagnostics**: `./tools/preflight-check.sh`
+3. **Try again**: Most issues are temporary network problems
+4. **Reset and retry**: `./tools/reset-validator.sh` then start over
+
+### Q: How do I know if the installation worked?
+**A:**
+```bash
+./validate.sh status
+```
+Should show "✅ Validator is running" if successful.
+
+## 🔧 Configuration
+
+### Q: What validator name should I choose?
+**A:** Pick something unique and identifiable:
+- ✅ **Good**: "Alice-Tech-Validator", "University-Blockchain-Lab"
+- ❌ **Avoid**: Special characters, very long names, generic names like "Validator1"
+
+### Q: Should I change the default ports?
+**A:** For beginners, use defaults:
+- **P2P Port**: 30333 (for connecting to other validators)
+- **RPC Port**: 9944 (for local monitoring tools)
+- **Metrics Port**: 9615 (for performance monitoring)
+
+Only change if you get "port already in use" errors.
+
+### Q: What's the difference between staging and mainnet?
+**A:** 
+- **Staging**: Learning environment, no real money, safe for testing
+- **Mainnet**: Production network with real value (not available yet)
+
+**Always start with staging** to learn validator operations safely.
+
+## 🔑 Keys & Security
+
+### Q: What are session keys and why do I need them?
+**A:** Session keys are like your validator's ID card:
+- **Generated automatically** during setup
+- **Prove your validator's identity** to the network
+- **Required for earning rewards**
+- **Managed securely** by our scripts
+
+### Q: Do I need to share my private keys with anyone?
+**A:** **Never!** Our secure process:
+1. ✅ **Keys generated locally** on your machine
+2. ✅ **Only public information** shared with Fennel Labs
+3. ✅ **Private keys stay private** and secured
+4. ✅ **Fennel Labs uses admin powers** to register you
+
+### Q: Where are my keys stored and how are they protected?
+**A:** 
+- **Location**: `validator-data/` directory
+- **Permissions**: Read-only for your user account
+- **Backup**: Copy this directory to secure storage
+- **Protection**: Never uploaded or shared automatically
+
+### Q: What if I lose my keys?
+**A:** 
+- **Session keys**: Can be regenerated with `./scripts/generate-session-keys.sh`
+- **Stash account**: Can be recovered with seed phrase (saved securely)
+- **Validator data**: Keep regular backups of `validator-data/` directory
+
+## 🌐 Network & Connectivity
+
+### Q: My validator shows "0 peers connected" - is this bad?
+**A:** Yes, this indicates connectivity issues:
+```bash
+# Check firewall
+sudo ufw allow 30333/tcp
+
+# Restart validator
+./validate.sh restart
+
+# Run diagnostics
+./tools/troubleshoot.sh
+```
+
+### Q: How many peers should I have connected?
+**A:** 
+- **Minimum**: 1-2 peers (validator will work)
+- **Good**: 5-15 peers (recommended range)
+- **Excellent**: 15+ peers (optimal connectivity)
+
+### Q: Can I run a validator behind a firewall/NAT?
+**A:** Yes, but port 30333 must be accessible:
+- **Home router**: Forward port 30333 to your validator machine
+- **Corporate firewall**: Request port 30333 outbound access
+- **Cloud hosting**: Ensure security groups allow port 30333
+
+### Q: Why does initial sync take so long?
+**A:** Your validator is downloading the entire blockchain history:
+- **Staging network**: ~2-5GB of data
+- **Speed depends on**: Internet connection and network traffic
+- **Progress**: Check `./validate.sh logs` for sync status
+
+## 💰 Rewards & Registration
+
+### Q: When do I start earning rewards?
+**A:** After completing registration:
+1. **Generate keys**: `./scripts/generate-session-keys.sh`
+2. **Complete registration**: `./tools/complete-registration.sh`
+3. **Submit to Fennel Labs**: Send the generated file
+4. **Wait for activation**: Fennel Labs adds you to validator set
+5. **Start earning**: Once active in the validator set
+
+### Q: How much can I earn as a validator?
+**A:** 
+- **Staging network**: No real monetary rewards (learning environment)
+- **Future mainnet**: Rewards will depend on network economics
+- **Purpose**: Focus on learning and contributing to network security
+
+### Q: What information do I need to send to Fennel Labs?
+**A:** Only public information automatically generated:
+- Your validator's public address
+- Session keys (public portion only)
+- Validator name and configuration
+
+**Never share**: Private keys, seed phrases, or passwords.
+
+## 🛠️ Troubleshooting
+
+### Q: My validator stopped working. What should I do?
+**A:** Step-by-step diagnosis:
+```bash
+# Check if still running
+./validate.sh status
+
+# If stopped, restart
+./validate.sh restart
+
+# Check for errors
+./validate.sh logs
+
+# Run full diagnosis
+./tools/troubleshoot.sh
+```
+
+### Q: How do I update my validator?
+**A:** Simple update process:
+```bash
+# Stop validator
+./validate.sh stop
+
+# Update software
+./install.sh
+
+# Restart validator
+./validate.sh start
+```
+
+### Q: Something went wrong. How do I start over?
+**A:** Complete reset (keeps backups):
+```bash
+./tools/reset-validator.sh
+```
+Then follow the setup process again from the beginning.
+
+### Q: How do I monitor my validator's performance?
+**A:** Several monitoring options:
+```bash
+# Quick status
+./validate.sh status
+
+# Detailed information
+./tools/validator-status.sh
+
+# Real-time logs
+./validate.sh logs
+
+# Network health
+curl -s http://localhost:9944/health
+```
+
+## 🏢 Advanced Questions
+
+### Q: Can I run this on a VPS/cloud server?
+**A:** Yes! Cloud hosting is often better for validators:
+- **Advantages**: Better uptime, faster internet, dedicated resources
+- **Popular providers**: AWS, Google Cloud, DigitalOcean, Oracle Cloud
+- **Minimum specs**: 2 CPU, 4GB RAM, 50GB storage
+
+### Q: Should I use Docker or run natively?
+**A:** For beginners, our native setup is easier:
+- **Native**: What our scripts use (recommended for beginners)
+- **Docker**: Advanced users only (not officially supported)
+
+### Q: How do I backup my validator?
+**A:** Essential files to backup:
+```bash
+# Create backup
+tar -czf validator-backup-$(date +%Y%m%d).tar.gz validator-data/ config/
+
+# Store securely
+# Copy to external drive, cloud storage, etc.
+```
+
+### Q: Can I migrate my validator to a different machine?
+**A:** Yes, with careful steps:
+1. **Stop old validator**: `./validate.sh stop`
+2. **Backup data**: Copy `validator-data/` and `config/`
+3. **Set up new machine**: Install FennelValidator
+4. **Restore data**: Copy backed up directories
+5. **Start new validator**: `./validate.sh start`
+
+**Important**: Never run the same validator on multiple machines simultaneously!
+
+## 🆘 Getting Help
+
+### Q: Where can I get help if I'm stuck?
+**A:** Multiple support channels:
+1. **Built-in diagnostics**: `./tools/troubleshoot.sh`
+2. **Documentation**: All files in `docs/` directory
+3. **Community**: [Discord/forum links will be provided]
+4. **GitHub Issues**: Report bugs and problems
+
+### Q: How do I report a bug or suggestion?
+**A:** 
+1. **Check existing issues**: GitHub repository issues
+2. **Run diagnostics**: Include output from `./tools/troubleshoot.sh`
+3. **Describe problem**: What you expected vs what happened
+4. **Environment details**: OS, specs, network setup
+
+Remember: **No question is too basic!** The Fennel community is here to help you succeed as a validator.
 **A:** Run `./start.sh` → Choose "Troubleshoot" - it will diagnose and fix common issues automatically.
 
 ### Q: Can I reconfigure my validator?

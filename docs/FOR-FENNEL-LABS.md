@@ -42,21 +42,33 @@ sudo.transfer(stash_account_address, amount)
 - Amount needed for validator operations
 - No need to coordinate with validator
 
+**Via Polkadot.js Apps:**
+1. Go to **Developer** → **Extrinsics**
+2. **Using**: Select your sudo account (e.g., Alice)
+3. **Submit the following extrinsic**: `sudo`
+4. **Call**: `sudo`
+5. **call: Call**: Select `balances → transfer`
+6. **dest**: `[stash_account_address_from_submission]`
+7. **value**: Recommended amount (e.g., 1000000000000 = 1 token with 12 decimals)
+8. **Submit Transaction**
+
 ### Step 3: Bind Session Keys (Using Sudo)
 ```bash
 # Use sudo to bind session keys to stash account
-sudo.setKeys(stash_account, session_keys, proof)
+sudo.sudoAs(stash_account, session.setKeys(session_keys, proof))
 ```
 - Automatically binds the provided session keys
 - No need for validator to call session.setKeys() manually
+- Uses `sudoAs` to execute the call AS the stash account
 
 ### Step 4: Add to Validator Set (Using Sudo)
 ```bash
 # Use sudo to add validator to active set
-validatorManager.addValidator(stash_account)
+sudo.sudo(validatorManager.addValidator(stash_account))
 ```
-- Validator joins active set immediately
-- No era/session waiting required
+- Validator joins active set after next session rotation
+- Session rotation occurs every 50 blocks (~10 minutes) in Fennel
+- Uses the custom `validatorManager` pallet
 
 ## Detailed Polkadot.js Apps Instructions
 
@@ -106,14 +118,14 @@ validatorManager.addValidator(stash_account)
    - **Call**: `sudo`
 
 3. **Fill Parameters:**
-   - **call: Call**: Select `[validator_pallet] → [add_validator_call]`
+   - **call: Call**: Select `validatorManager → addValidator`
    - **validator**: `[stash_account_address_from_submission]`
 
 4. **Submit:**
    - Click **"Submit Transaction"**
    - Sign and submit the transaction
 
-*Note: Step 4 details depend on your specific validator management pallet - please check what validator pallets are available.*
+*Note: The Fennel network uses a custom `validatorManager` pallet for validator set management. The exact pallet name should match what appears in your Polkadot.js Apps interface.*
 
 ---
 
@@ -134,10 +146,10 @@ sudo.sudoAs(
 )
 ```
 
-#### **Step 4 Example (update with correct pallet):**
+#### **Step 4 Example (updated for Fennel):**
 ```
 sudo.sudo(
-  call: [validator_pallet].addValidator(
+  call: validatorManager.addValidator(
     validator: 5HgFtarhbicYc45S9vwSTqX8uStPzs7b1H7NnMF5MQ3xBRD9
   )
 )
@@ -156,9 +168,14 @@ sudo.sudo(
 
 #### **After Step 4 - Verify Validator in Set:**
 1. Go to **Developer** → **Chain State**
-2. **Pallet**: `session` (or `validatorSet`)
+2. **Pallet**: `session`
 3. **Call**: `validators`
 4. **Query** - Should include the new validator address in the list
+
+**Alternative verification:**
+1. **Pallet**: `validatorManager`
+2. **Call**: `validatorsToAdd` (if available)
+3. **Query** - Check if validator is pending addition
 
 ---
 
@@ -215,9 +232,9 @@ Each validator has:
 
 ### Sudo Operations Required
 All registration steps are handled via sudo:
-1. **sudo.transfer()** - Fund stash account
-2. **sudo.setKeys()** - Bind session keys to stash
-3. **validatorManager.addValidator()** - Add to validator set
+1. **sudo.sudo(balances.transfer())** - Fund stash account
+2. **sudo.sudoAs(stash, session.setKeys())** - Bind session keys to stash
+3. **sudo.sudo(validatorManager.addValidator())** - Add to validator set
 
 ## Troubleshooting
 
@@ -240,7 +257,9 @@ All registration steps are handled via sudo:
 **Polkadot.js Apps Issues:**
 - Ensure connected to correct Fennel network endpoint
 - Verify sudo account has sufficient balance
-- Check that pallet names match your runtime (`validatorManager` vs `validator` etc.)
+- Check that pallet names match your runtime (`validatorManager` is correct for Fennel)
+- Session rotation occurs every 50 blocks (~10 minutes) - validators join after next rotation
+- Verify the exact pallet methods in your Polkadot.js Apps interface
 
 ## Communication with Validators
 
@@ -297,4 +316,45 @@ Then choosing "Troubleshoot Issues"
 For questions about this process:
 - Technical issues: Direct validators to use their troubleshooter
 - Registration questions: Contact Fennel Labs admin team
-- Process improvements: Submit feedback to repository 
+- Process improvements: Submit feedback to repository
+
+## 🔧 Alternative: Using RPC Calls (Advanced)
+
+For automation or if Polkadot.js Apps interface is unavailable, you can use direct RPC calls:
+
+### Step 2: Fund Stash Account (RPC)
+```bash
+# Using curl to make RPC call
+curl -H "Content-Type: application/json" -d '{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "author_submitExtrinsic",
+  "params": ["0x..."] // Signed extrinsic hex
+}' http://localhost:9944
+```
+
+### Step 3: Bind Session Keys (RPC)
+```bash
+# Submit sudoAs(stash, session.setKeys()) extrinsic
+curl -H "Content-Type: application/json" -d '{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "author_submitExtrinsic",
+  "params": ["0x..."] // Signed sudoAs extrinsic hex
+}' http://localhost:9944
+```
+
+### Step 4: Add to Validator Set (RPC)
+```bash
+# Submit sudo(validatorManager.addValidator()) extrinsic
+curl -H "Content-Type: application/json" -d '{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "method": "author_submitExtrinsic",
+  "params": ["0x..."] // Signed sudo extrinsic hex
+}' http://localhost:9944
+```
+
+*Note: RPC method requires constructing and signing extrinsics manually. Use Polkadot.js Apps for simpler workflow.*
+
+---

@@ -48,6 +48,12 @@ backups/
 
 # Temporary files
 *.tmp
+
+# Oracle Cloud Infrastructure configuration (sensitive credentials)
+oci-config/
+.oci/
+oracle-deployment-summary.txt
+connect-to-instance.sh
 *.temp
 .tmp/
 

@@ -240,8 +240,8 @@ check_ports() {
 check_bootnode_connectivity() {
     echo -e "\n${BLUE}🌐 Bootnode Connectivity${NC}"
     
-    BOOTNODE1="135.18.208.132"
-    BOOTNODE2="132.196.191.14"
+    BOOTNODE1="9.169.240.42"
+    BOOTNODE2="130.213.254.26"
     PORT="30333"
     
     if command -v nc >/dev/null 2>&1; then
