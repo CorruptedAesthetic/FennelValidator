@@ -1,0 +1,65 @@
+Subject: Validator Registration Request - {{ ansible_hostname }}
+
+Dear Fennel Labs Team,
+
+I am writing to request registration as a validator on the Fennel network. Below are my validator details:
+
+=== VALIDATOR INFORMATION ===
+
+Node Name: fennel-val-01
+Server: Oracle Cloud VM.Standard.E5.Flex (3 OCPU, 12GB RAM)
+Location: {{ ansible_default_ipv4.address }}
+Operator: {{ ansible_user_id }}
+
+=== STASH ACCOUNT ===
+
+{% if stash_account_content != 'Stash account not found' %}
+{% set stash_info = stash_account_content | from_json %}
+Address: {{ stash_info.ss58Address }}
+Public Key: {{ stash_info.publicKey }}
+{% else %}
+Please create a stash account for my validator or provide guidance on funding requirements.
+{% endif %}
+
+=== SESSION KEYS ===
+
+{% if session_keys_content != 'Session keys not found' %}
+{{ session_keys_content }}
+{% else %}
+Session keys not found. Please generate new session keys.
+{% endif %}
+
+=== TECHNICAL SPECIFICATIONS ===
+
+Fennel Binary Version: v0.5.9
+Chain Spec: production-raw.json
+Network Connectivity: Verified ({{ ansible_default_ipv4.address }}:30333)
+RPC Endpoint: {{ ansible_default_ipv4.address }}:9944 (localhost only)
+Prometheus Metrics: {{ ansible_default_ipv4.address }}:9615
+
+=== DEPLOYMENT METHOD ===
+
+Deployed using:
+- Ansible automation with Parity Technologies collection
+- Secure key generation via author_rotateKeys method
+- Production-ready systemd service configuration
+- Automated chain specification download
+
+=== NEXT STEPS ===
+
+Please confirm:
+1. Validator registration requirements
+2. Minimum staking amount needed
+3. Network connection verification
+4. Any additional setup requirements
+
+I am ready to proceed with the validator registration process and look forward to contributing to the Fennel network.
+
+Thank you for your time and assistance.
+
+Best regards,
+{{ ansible_user_id }}
+
+---
+Generated: {{ ansible_date_time.iso8601 }}
+Validator Node: fennel-val-01

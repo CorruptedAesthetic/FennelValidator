@@ -1,0 +1,30 @@
+---
+# Validator configuration variables
+# These can be overridden via environment variables or --extra-vars
+
+# IMPORTANT: For production, use Ansible Vault to encrypt these values
+# Generate with: ansible-vault encrypt_string 'your_secret_seed' --name 'aura_seed'
+
+# Placeholder values - replace with actual seeds or use environment variables
+aura_seed: "{{ lookup('env', 'AURA_SEED') | default('//Alice') }}"
+grandpa_seed: "{{ lookup('env', 'GRANDPA_SEED') | default('//Alice') }}"
+node_key: "{{ lookup('env', 'NODE_KEY') | default('0x0000000000000000000000000000000000000000000000000000000000000001') }}"
+
+# Node configuration
+node_name: "{{ lookup('env', 'NODE_NAME') | default('fennel-validator') }}"
+telemetry_url: "wss://telemetry.polkadot.io/submit/ 0"
+
+# Binary configuration - uses native binary, not Docker  
+# Updated to v0.5.9 with direct binary download
+node_binary: https://github.com/CorruptedAesthetic/fennel-solonet/releases/download/fennel-node-0.5.9/fennel-node-linux-x86_64
+node_binary_checksum: "sha256:93c2651c55a5fdaa4ee6d5399b0e961a159235fde4f4fa75b384a0c1b13f03b5"
+
+# Network settings
+p2p_port: 30333
+rpc_port: 9933  # localhost only for security
+ws_port: 9944   # localhost only for security
+prometheus_port: 9615
+
+# Security settings
+enable_rpc_external: false  # Keep RPC local for security
+enable_ws_external: false   # Keep WebSocket local for security

@@ -1,5 +1,19 @@
 # Fennel Validator - Files to ignore in version control
 
+# Legacy deployment files (removed in v2.0 - use Ansible instead)
+start.sh
+install.sh
+install-fixed.sh
+setup-validator.sh
+validate.sh
+test-deployment.sh
+test-keys.sh
+update-infrastructure.sh
+tools/
+scripts/
+bin/
+test-bin/
+
 # Build and temporary files
 target/
 Cargo.lock
@@ -50,11 +64,8 @@ backups/
 *.tmp
 temp_binary_path.txt
 
-# Oracle Cloud Infrastructure configuration (sensitive credentials)
-oci-config/
-.oci/
-oracle-deployment-summary.txt
-connect-to-instance.sh
+# Cloud provider configurations (sensitive credentials)
+.cloud-config/
 *.temp
 .tmp/
 
@@ -103,7 +114,7 @@ config/fennel-staging.raw.json
 data/
 *.tmp
 
-# Generated scripts (validate.sh is now committed as it contains important DNS fixes)
+# Generated scripts - modern deployment uses Ansible only
 # validate.sh
 
 # Connection info cache

@@ -1,0 +1,3 @@
+[fennel_validators]
+# Test inventory - replace with real server for actual deployment
+localhost ansible_connection=local ansible_user=neurosx
