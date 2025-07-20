@@ -1,6 +1,6 @@
 # 🌱 Fennel Validator
 
-*Fennel Network validator deployment**
+**Fennel Network validator deployment**
 
 ## 🚀 Quick Start
 
