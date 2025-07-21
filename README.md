@@ -1,10 +1,8 @@
 # 🌱 Fennel Validator
 
-**Professional-grade Fennel Network validator deployment**
+**Fennel Network validator deployment**
 
 ## 🚀 Quick Start
-
-Enterprise-grade deployment using Parity Technologies' proven methodology:
 
 ```bash
 # 1. Clone this repository
