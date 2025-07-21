@@ -13,6 +13,29 @@ This document outlines what information operators need to provide about their cl
 | **Storage** | 100 GB SSD | 200 GB SSD | 500+ GB SSD |
 | **Network** | 100 Mbps | 1 Gbps | 1+ Gbps |
 
+### Bare Metal Hardware Recommendations
+
+#### Home Lab / Small Business
+- **Minimum**: Intel i3-8100 / AMD Ryzen 3 2200G (4 cores, 4GB RAM)
+- **Recommended**: Intel i5-8400 / AMD Ryzen 5 2600 (6 cores, 16GB RAM)
+- **Production**: Intel i7-8700 / AMD Ryzen 7 2700X (8 cores, 32GB RAM)
+- **Storage**: 500GB-1TB NVMe SSD or SATA SSD
+- **Network**: 100+ Mbps broadband with static IP or dynamic DNS
+
+#### Enterprise / Data Center
+- **Minimum**: Dell PowerEdge R440 / HP ProLiant DL360 (2x Xeon, 32GB RAM)
+- **Recommended**: Dell PowerEdge R640 / HP ProLiant DL380 (2x Xeon, 64GB RAM)
+- **Production**: Dell PowerEdge R740 / HP ProLiant DL380 (2x Xeon, 128GB RAM)
+- **Storage**: 1-2TB NVMe SSD or enterprise SSD array
+- **Network**: 1+ Gbps with redundant connections
+
+#### Bare Metal Considerations
+- **Power**: UPS backup recommended for production
+- **Cooling**: Ensure adequate ventilation and cooling
+- **Physical Security**: Secure location with controlled access
+- **Monitoring**: Hardware monitoring (temperature, power, disk health)
+- **Backup Power**: Generator or UPS for 24/7 operation
+
 ### Cloud Provider VM Recommendations
 
 #### Amazon Web Services (AWS)
@@ -148,9 +171,27 @@ cd ansible/
 ansible-playbook -i ../custom-inventory validator.yml -e generate_keys=true
 ```
 
-## Cloud Provider Defaults
+## Bare Metal Network Configuration
 
-### Amazon Web Services (AWS)
+### Home Lab / Residential
+- **Static IP**: Configure static IP on router or use dynamic DNS
+- **Port Forwarding**: Forward port 30333 to validator server
+- **Firewall**: Configure router firewall to allow P2P traffic
+- **Dynamic DNS**: Use services like DuckDNS, No-IP, or DynDNS
+
+### Enterprise / Data Center
+- **Public IP**: Direct public IP assignment
+- **BGP Routing**: For multi-homed setups
+- **Load Balancer**: For high-availability configurations
+- **DDoS Protection**: Consider DDoS mitigation services
+
+### Network Requirements
+- **Bandwidth**: 100+ Mbps upload/download
+- **Latency**: <100ms to major internet exchanges
+- **Uptime**: 99%+ availability for production validators
+- **Redundancy**: Backup internet connection recommended
+
+## Cloud Provider Defaults
 - **SSH User**: `ubuntu` (Ubuntu AMI), `ec2-user` (Amazon Linux), `admin` (Debian)
 - **SSH Key**: EC2 Key Pair (.pem file)
 - **Server IP**: Public IPv4 or public DNS name
@@ -225,9 +266,45 @@ Your server must allow these connections:
 | `9615` | Inbound | Metrics (optional) | Monitoring systems |
 | `80/443` | Outbound | Downloads | `0.0.0.0/0` |
 
-### Cloud Provider Firewall Examples
+### Bare Metal Firewall Examples
 
-**AWS Security Groups:**
+**Ubuntu/Debian (ufw):**
+```bash
+# Configure firewall
+sudo ufw allow 22/tcp comment 'SSH'
+sudo ufw allow 30333/tcp comment 'Fennel P2P'
+sudo ufw allow 9615/tcp comment 'Metrics'
+sudo ufw enable
+
+# Check status
+sudo ufw status numbered
+```
+
+**CentOS/RHEL (firewalld):**
+```bash
+# Configure firewall
+sudo firewall-cmd --permanent --add-port=22/tcp
+sudo firewall-cmd --permanent --add-port=30333/tcp
+sudo firewall-cmd --permanent --add-port=9615/tcp
+sudo firewall-cmd --reload
+
+# Check status
+sudo firewall-cmd --list-all
+```
+
+**Router Configuration (Home Lab):**
+```bash
+# Port forwarding rules (configure on your router)
+External Port 30333 → Internal IP:PORT 192.168.1.100:30333
+External Port 9615  → Internal IP:PORT 192.168.1.100:9615
+
+# Example for common routers:
+# - Asus: Advanced Settings → WAN → Virtual Server
+# - Netgear: Advanced → Port Forwarding
+# - TP-Link: Forwarding → Virtual Servers
+```
+
+### Cloud Provider Firewall Examples
 ```bash
 # Inbound rules
 ssh-access: 22/tcp from YOUR_IP/32

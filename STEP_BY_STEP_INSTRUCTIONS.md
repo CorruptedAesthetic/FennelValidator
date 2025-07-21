@@ -148,6 +148,51 @@ curl: curl 7.81.0 (x86_64-pc-linux-gnu)
 git: git version 2.34.1
 ```
 
+## Bare Metal Deployment Considerations
+
+### Hardware Setup
+- **Physical Access**: Ensure you have physical access to the server
+- **Power Management**: Configure UPS and power management
+- **Cooling**: Ensure adequate ventilation and temperature monitoring
+- **Network**: Connect to stable internet with appropriate bandwidth
+
+### Operating System Installation
+```bash
+# Recommended: Ubuntu 22.04 LTS Server
+# Download from: https://ubuntu.com/download/server
+# Install with:
+# - OpenSSH server (for remote access)
+# - Standard system utilities
+# - No GUI (headless operation preferred)
+```
+
+### Network Configuration
+```bash
+# Configure static IP (recommended for production)
+sudo nano /etc/netplan/01-netcfg.yaml
+
+# Example configuration:
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: false
+      addresses:
+        - 192.168.1.100/24
+      gateway4: 192.168.1.1
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+
+# Apply configuration
+sudo netplan apply
+```
+
+### Port Forwarding (Home Lab)
+If running behind a router, configure port forwarding:
+- **Port 30333** → Your validator server IP
+- **Port 9615** → Your validator server IP (optional, for monitoring)
+
 ## Method 1: Configuration Wizard (Recommended for First-Time Users)
 
 ### Step 1: Navigate to Repository
@@ -342,6 +387,46 @@ curl http://YOUR_SERVER_IP:9615/metrics
 ```
 
 ---
+
+## Bare Metal Specific Troubleshooting
+
+### Hardware Issues
+```bash
+# Check system resources
+htop                    # CPU and memory usage
+df -h                   # Disk space
+sudo smartctl -a /dev/sda  # Disk health (if smartmontools installed)
+
+# Check temperature (if sensors available)
+sudo apt install lm-sensors
+sensors
+
+# Check power supply
+sudo dmesg | grep -i power
+```
+
+### Network Issues (Bare Metal)
+```bash
+# Check network connectivity
+ip addr show            # Network interfaces
+ip route show           # Routing table
+ping -c 4 8.8.8.8      # Internet connectivity
+nslookup google.com     # DNS resolution
+
+# Check port forwarding
+sudo netstat -tulpn | grep :30333
+telnet localhost 30333  # Test local port
+```
+
+### Power Management
+```bash
+# Check UPS status (if available)
+sudo apt install apcupsd
+apcaccess status
+
+# Configure automatic shutdown on power failure
+sudo nano /etc/apcupsd/apcupsd.conf
+```
 
 ## Troubleshooting Common Issues
 
