@@ -2,6 +2,104 @@
 
 This document outlines what information operators need to provide about their cloud/VM environment for Fennel Validator deployment.
 
+## Server Requirements
+
+### Minimum Hardware Specifications
+
+| Resource | Minimum | Recommended | Production |
+|----------|---------|-------------|------------|
+| **CPU** | 2 vCPUs | 4 vCPUs | 8+ vCPUs |
+| **RAM** | 4 GB | 8 GB | 16+ GB |
+| **Storage** | 100 GB SSD | 200 GB SSD | 500+ GB SSD |
+| **Network** | 100 Mbps | 1 Gbps | 1+ Gbps |
+
+### Cloud Provider VM Recommendations
+
+#### Amazon Web Services (AWS)
+- **Minimum**: `t3.medium` (2 vCPU, 4 GB RAM)
+- **Recommended**: `t3.large` (2 vCPU, 8 GB RAM) or `c5.large` (2 vCPU, 4 GB RAM)
+- **Production**: `c5.xlarge` (4 vCPU, 8 GB RAM) or `c5.2xlarge` (8 vCPU, 16 GB RAM)
+- **Storage**: EBS gp3 (100+ GB)
+
+#### Google Cloud Platform (GCP)
+- **Minimum**: `e2-medium` (2 vCPU, 4 GB RAM)
+- **Recommended**: `e2-standard-2` (2 vCPU, 8 GB RAM) or `n2-standard-2` (2 vCPU, 8 GB RAM)
+- **Production**: `n2-standard-4` (4 vCPU, 16 GB RAM) or `n2-standard-8` (8 vCPU, 32 GB RAM)
+- **Storage**: Standard Persistent Disk (100+ GB)
+
+#### Microsoft Azure
+- **Minimum**: `Standard_B2s` (2 vCPU, 4 GB RAM)
+- **Recommended**: `Standard_D2s_v3` (2 vCPU, 8 GB RAM) or `Standard_D4s_v3` (4 vCPU, 16 GB RAM)
+- **Production**: `Standard_D8s_v3` (8 vCPU, 32 GB RAM) or `Standard_E4s_v3` (4 vCPU, 32 GB RAM)
+- **Storage**: Premium SSD (100+ GB)
+
+#### DigitalOcean
+- **Minimum**: Basic Droplet ($12/month - 2 vCPU, 2 GB RAM)
+- **Recommended**: Regular Droplet ($24/month - 2 vCPU, 4 GB RAM) or ($48/month - 4 vCPU, 8 GB RAM)
+- **Production**: Regular Droplet ($96/month - 8 vCPU, 16 GB RAM)
+- **Storage**: SSD Block Storage (100+ GB)
+
+#### Oracle Cloud Infrastructure (OCI)
+- **Minimum**: VM.Standard.E3.Flex (2 OCPU, 8 GB RAM)
+- **Recommended**: VM.Standard.E4.Flex (2 OCPU, 16 GB RAM) or (4 OCPU, 32 GB RAM)
+- **Production**: VM.Standard.E4.Flex (8 OCPU, 64 GB RAM) or BM.Standard.E4.128 (128 GB RAM)
+- **Storage**: Block Volume (100+ GB)
+
+#### Vultr
+- **Minimum**: Cloud Compute ($12/month - 2 vCPU, 4 GB RAM)
+- **Recommended**: Cloud Compute ($24/month - 2 vCPU, 8 GB RAM) or ($48/month - 4 vCPU, 16 GB RAM)
+- **Production**: Cloud Compute ($96/month - 8 vCPU, 32 GB RAM)
+- **Storage**: Block Storage (100+ GB)
+
+#### Linode
+- **Minimum**: Shared CPU ($12/month - 2 vCPU, 4 GB RAM)
+- **Recommended**: Shared CPU ($24/month - 2 vCPU, 8 GB RAM) or ($48/month - 4 vCPU, 16 GB RAM)
+- **Production**: Dedicated CPU ($96/month - 4 vCPU, 16 GB RAM)
+- **Storage**: Block Storage (100+ GB)
+
+#### Hetzner Cloud
+- **Minimum**: CX21 (2 vCPU, 4 GB RAM, €5.83/month)
+- **Recommended**: CX31 (2 vCPU, 8 GB RAM, €8.70/month) or CX41 (4 vCPU, 16 GB RAM, €13.92/month)
+- **Production**: CX51 (8 vCPU, 32 GB RAM, €27.84/month)
+- **Storage**: Block Storage (100+ GB)
+
+### Operating System Requirements
+
+- **Recommended**: Ubuntu 22.04 LTS or Ubuntu 20.04 LTS
+- **Alternative**: Debian 11+, CentOS 8+, RHEL 8+
+- **Architecture**: x86_64 (AMD64)
+- **Kernel**: Linux 5.4+ (for Ubuntu 20.04+)
+
+### Storage Considerations
+
+- **Type**: SSD storage (NVMe preferred for production)
+- **Performance**: Minimum 3000 IOPS for production workloads
+- **Growth**: Plan for 2-3x storage growth over time
+- **Backup**: Consider automated backups for production validators
+
+### Cost Considerations
+
+| Tier | Monthly Cost Range | Use Case |
+|------|-------------------|----------|
+| **Budget** | $12-24/month | Testing, development, small validators |
+| **Standard** | $24-96/month | Most production validators |
+| **Performance** | $96-300+/month | High-performance, enterprise validators |
+
+### Performance Expectations
+
+- **Block Production**: 99%+ uptime for production validators
+- **Network Sync**: Should sync within 24-48 hours from genesis
+- **Memory Usage**: 2-4 GB RAM under normal load, 6-8 GB during sync
+- **CPU Usage**: 10-30% average, spikes during block production
+- **Disk I/O**: Moderate during sync, low during normal operation
+
+### Scaling Considerations
+
+- **Start Small**: Begin with minimum specs and scale up as needed
+- **Monitor Resources**: Use cloud provider monitoring tools
+- **Auto-scaling**: Consider for production environments with variable load
+- **Geographic Distribution**: Multiple validators across regions for redundancy
+
 ## Required Information
 
 ### 1. Server Connection Details
