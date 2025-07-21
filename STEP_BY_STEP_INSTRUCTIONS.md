@@ -7,8 +7,146 @@ Here's a complete guide to deploy a Fennel validator using Ansible from this rep
 Before starting, ensure you have:
 - ✅ A Linux server (Ubuntu 20.04+ recommended) with SSH access
 - ✅ Server IP address and SSH credentials  
-- ✅ Ansible installed on your local machine
-- ✅ `jq` and `subkey` tools available
+- ✅ Local machine with required tools installed (see installation guide below)
+
+### Local Machine Tool Installation
+
+You need to install the following tools on your local machine (not the server):
+
+#### 1. Install Ansible
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install -y ansible python3-pip
+```
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install ansible
+
+# Or using pip
+pip3 install ansible
+```
+
+**CentOS/RHEL/Fedora:**
+```bash
+# CentOS/RHEL 8+
+sudo dnf install -y ansible
+
+# Or using pip
+pip3 install ansible
+```
+
+**Verify Installation:**
+```bash
+ansible --version
+# Should show version 2.15.6 or higher
+```
+
+#### 2. Install jq (JSON processor)
+
+**Ubuntu/Debian:**
+```bash
+sudo apt install -y jq
+```
+
+**macOS:**
+```bash
+brew install jq
+```
+
+**CentOS/RHEL/Fedora:**
+```bash
+sudo dnf install -y jq
+```
+
+**Verify Installation:**
+```bash
+jq --version
+```
+
+#### 3. Install subkey (Substrate key management tool)
+
+**Option A: Install via Cargo (Recommended)**
+```bash
+# First install Rust if you don't have it
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source ~/.cargo/env
+
+# Install subkey
+cargo install --git https://github.com/paritytech/substrate subkey --force
+```
+
+**Option B: Download pre-built binary**
+```bash
+# Download subkey v3.0.0 (compatible version)
+curl -fSL -o subkey 'https://releases.parity.io/substrate/x86_64-debian%3Astretch/v3.0.0/subkey/subkey'
+chmod +x subkey
+sudo mv subkey /usr/local/bin/subkey
+```
+
+**Verify Installation:**
+```bash
+subkey --version
+```
+
+#### 4. Install Additional Tools
+
+**SSH Client (usually pre-installed):**
+```bash
+# Verify SSH is available
+ssh -V
+```
+
+**curl (for API calls):**
+```bash
+# Ubuntu/Debian
+sudo apt install -y curl
+
+# macOS (usually pre-installed)
+# brew install curl
+
+# CentOS/RHEL/Fedora
+sudo dnf install -y curl
+```
+
+**git (for repository access):**
+```bash
+# Ubuntu/Debian
+sudo apt install -y git
+
+# macOS (usually pre-installed)
+# brew install git
+
+# CentOS/RHEL/Fedora
+sudo dnf install -y git
+```
+
+#### 5. Verify All Tools
+
+Run this command to verify all required tools are installed:
+```bash
+echo "Checking required tools..."
+echo "Ansible: $(ansible --version | head -n1)"
+echo "jq: $(jq --version)"
+echo "subkey: $(subkey --version)"
+echo "SSH: $(ssh -V)"
+echo "curl: $(curl --version | head -n1)"
+echo "git: $(git --version)"
+```
+
+**Expected Output:**
+```
+Checking required tools...
+Ansible: ansible [core 2.15.6]
+jq: jq-1.6
+subkey: subkey 3.0.0
+SSH: OpenSSH_8.9p1 Ubuntu-3ubuntu0.3, OpenSSL 3.0.2 15 Mar 2022
+curl: curl 7.81.0 (x86_64-pc-linux-gnu)
+git: git version 2.34.1
+```
 
 ## Method 1: Configuration Wizard (Recommended for First-Time Users)
 
