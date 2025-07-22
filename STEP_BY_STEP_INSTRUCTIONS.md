@@ -79,6 +79,7 @@ source ~/.cargo/env
 cargo install --git https://github.com/paritytech/substrate subkey --force
 ```
 
+
 **Option B: Download pre-built binary**
 ```bash
 # Download subkey v3.0.0 (compatible version)

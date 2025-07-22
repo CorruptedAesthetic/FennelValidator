@@ -123,32 +123,6 @@ print_info "=== Cloud Provider Information (Optional) ==="
 print_prompt "Which cloud provider are you using? (aws/gcp/azure/oracle/digitalocean/other/skip): "
 read -r cloud_provider
 
-# Oracle Cloud specific guidance
-if [[ "$cloud_provider" =~ ^[Oo]racle ]]; then
-    print_info "Oracle Cloud detected!"
-    echo
-    print_info "🏛️  For Oracle Cloud-specific setup, use our dedicated tools:"
-    print_info "• Complete Oracle Cloud automation: ./oracle-cloud/setup-oracle-validator.sh"
-    print_info "• Budget optimization guide: ./oracle-cloud/docs/QUICK-BUDGET-SETUP.md"
-    print_info "• Migration from Docker: ./oracle-cloud/docs/ORACLE-DOCKER-MIGRATION.md"
-    echo
-    print_prompt "Do you want to use the Oracle Cloud automated setup instead? (Y/n): "
-    read -r use_oracle_setup
-    
-    if [[ ! "$use_oracle_setup" =~ ^[Nn] ]]; then
-        print_info "Launching Oracle Cloud automated setup..."
-        exec ./oracle-cloud/setup-oracle-validator.sh
-        exit 0
-    fi
-    
-    print_info "Continuing with general cloud setup..."
-    print_info "Common Oracle Cloud SSH users:"
-    print_info "  - opc (Oracle Linux)"
-    print_info "  - ubuntu (Ubuntu instances)"
-    print_info "  - centos (CentOS instances)"
-    echo
-fi
-
 # Test connection
 echo
 print_info "=== Connection Test ==="
@@ -194,59 +168,128 @@ EOF
 echo
 print_info "=== Deployment Commands ==="
 
+# Store the inventory filename for later use
+INVENTORY_FILE=""
+
 if [ -z "$SSH_KEY_PATH" ] && [ "$SSH_USER" == "ubuntu" ]; then
     # Simple case - default settings
     echo "Your deployment command:"
     echo -e "${GREEN}./fennel-bootstrap.sh $SERVER_IP${NC}"
+    DEPLOYMENT_TYPE="bootstrap"
 else
     # Need custom inventory
     echo "Creating custom inventory file for your configuration..."
     
-    inventory_content="[fennel_validators]"
+    INVENTORY_FILE="custom-inventory-$(date +%Y%m%d-%H%M%S)"
+    
     if [ -n "$SSH_KEY_PATH" ]; then
         expanded_key_path="${SSH_KEY_PATH/#\~/$HOME}"
-        inventory_content="$inventory_content\n$SERVER_IP ansible_user=$SSH_USER ansible_ssh_private_key_file=$expanded_key_path"
+        cat > "$INVENTORY_FILE" << EOF
+[fennel_validators]
+$SERVER_IP ansible_user=$SSH_USER ansible_ssh_private_key_file=$expanded_key_path
+EOF
     else
-        inventory_content="$inventory_content\n$SERVER_IP ansible_user=$SSH_USER"
+        cat > "$INVENTORY_FILE" << EOF
+[fennel_validators]
+$SERVER_IP ansible_user=$SSH_USER
+EOF
     fi
     
-    cat > "custom-inventory-$(date +%Y%m%d-%H%M%S)" << EOF
-$inventory_content
-EOF
-    
-    echo "Custom inventory file created: custom-inventory-$(date +%Y%m%d-%H%M%S)"
+    echo "Custom inventory file created: $INVENTORY_FILE"
     echo
     echo "Your deployment commands:"
     echo -e "${GREEN}cd ansible/${NC}"
-    echo -e "${GREEN}ansible-playbook -i ../custom-inventory-$(date +%Y%m%d-%H%M%S) validator.yml -e generate_keys=true${NC}"
+echo -e "${GREEN}ansible-playbook -i ../$INVENTORY_FILE validator.yml -e generate_keys=true${NC}"
+    DEPLOYMENT_TYPE="ansible"
+fi
+
+echo
+print_info "=== Stash Account Generation ==="
+print_prompt "Would you like to auto-generate a stash account? (Y/n): "
+read -r generate_stash
+
+if [[ "$generate_stash" =~ ^[Nn] ]]; then
+    STASH_OPTION=""
+    print_info "Session keys only will be generated. You'll need to create your own stash account."
+else
+    STASH_OPTION="-e generate_stash=true"
+    print_info "Complete validator bundle (stash account + session keys) will be generated."
+fi
+
+echo
+print_info "=== Automatic Deployment Option ==="
+print_prompt "Would you like to deploy the validator now? (Y/n): "
+read -r deploy_now
+
+if [[ ! "$deploy_now" =~ ^[Nn] ]]; then
+    print_info "Starting automatic deployment..."
+    
+    if [ "$DEPLOYMENT_TYPE" == "bootstrap" ]; then
+        # Use bootstrap script
+        print_info "Running bootstrap deployment..."
+        if ./fennel-bootstrap.sh "$SERVER_IP"; then
+            print_success "Bootstrap deployment completed successfully!"
+        else
+            print_error "Bootstrap deployment failed. Please check the output above and try manual deployment."
+            exit 1
+        fi
+    else
+        # Use Ansible
+        print_info "Checking Ansible requirements..."
+        
+        # Check if we're in the right directory
+        if [ ! -d "ansible" ]; then
+            print_error "ansible/ directory not found. Make sure you're in the FennelValidator root directory."
+            exit 1
+        fi
+        
+        # Check if requirements.yml exists
+        if [ ! -f "ansible/requirements.yml" ]; then
+            print_error "ansible/requirements.yml not found. Cannot install Ansible roles."
+            exit 1
+        fi
+        
+        # Install Ansible requirements
+        print_info "Installing Ansible requirements..."
+        if ! (cd ansible && ansible-galaxy install -r requirements.yml); then
+            print_error "Failed to install Ansible requirements. Please check your Ansible installation."
+            exit 1
+        fi
+        
+        # Run the deployment
+        print_info "Running Ansible deployment..."
+        print_info "Command: ansible-playbook -i ../$INVENTORY_FILE validator.yml -e generate_keys=true $STASH_OPTION"
+        
+        if (cd ansible && ansible-playbook -i "../$INVENTORY_FILE" validator.yml -e generate_keys=true $STASH_OPTION); then
+            print_success "Ansible deployment completed successfully!"
+            echo
+            print_info "🎉 Your Fennel validator has been deployed!"
+            print_info "Please save any registration bundle information shown above."
+        else
+            print_error "Ansible deployment failed. Please check the output above."
+            print_info "You can try running the deployment manually with:"
+            print_info "cd ansible/"
+            print_info "ansible-playbook -i ../$INVENTORY_FILE validator.yml -e generate_keys=true"
+            exit 1
+        fi
+    fi
+else
+    print_info "Skipping automatic deployment."
 fi
 
 echo
 print_info "=== Next Steps ==="
 
-if [[ "$cloud_provider" =~ ^[Oo]racle ]]; then
-    print_info "Oracle Cloud Setup:"
-    echo "1. For comprehensive Oracle Cloud automation, consider:"
-    echo "   ./oracle-cloud/setup-oracle-validator.sh"
-    echo
-    echo "2. Or continue with manual setup:"
-    echo "   • Ensure your Oracle Cloud instance is configured properly"
-    echo "   • Configure Security Lists (firewall) for ports 22, 30333, 9615"
-    echo "   • See ./oracle-cloud/docs/ for detailed Oracle Cloud guides"
-    echo
-    echo "3. Run the deployment command shown above"
-    echo
-    echo "4. Register your validator using the generated keys"
-    echo
-    print_info "📚 Oracle Cloud specific guides:"
-    echo "   • ./oracle-cloud/docs/ORACLE-INTEGRATION.md - Complete setup"
-    echo "   • ./oracle-cloud/docs/ORACLE-SINGLE-VALIDATOR-GUIDE.md - Budget optimization"
-    echo "   • ./oracle-cloud/docs/ORACLE-DOCKER-MIGRATION.md - Migration guidance"
-else
+if [[ "$deploy_now" =~ ^[Nn] ]]; then
     echo "1. Review the firewall requirements in PRODUCTION-DEPLOYMENT.md"
     echo "2. Ensure ports 22, 30333, and 9615 are properly configured"
     echo "3. Run the deployment command shown above"
     echo "4. Follow the post-deployment instructions to register your validator"
+else
+    echo "1. If deployment was successful, your validator should now be running"
+    echo "2. Check the validator status with: ssh $SSH_USER@$SERVER_IP 'sudo systemctl status fennel-node'"
+    echo "3. View logs with: ssh $SSH_USER@$SERVER_IP 'sudo journalctl -u fennel-node -f'"
+    echo "4. Register your validator using any registration bundle shown above"
 fi
 
 echo

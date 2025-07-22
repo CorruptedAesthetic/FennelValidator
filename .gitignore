@@ -117,6 +117,9 @@ data/
 # Generated scripts - modern deployment uses Ansible only
 # validate.sh
 
+# Custom inventory files (contain personal server details)
+custom-inventory-*
+
 # Connection info cache
 network-info.tmp
 

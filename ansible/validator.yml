@@ -5,62 +5,64 @@
     - paritytech.chain          # Official Parity collection from Galaxy
 
   vars:
-    # === Fennel Chain Configuration ===
-    # Following official Parity collection structure
-    node_app_name: fennel-node
-    node_binary_version: v0.5.9
-    node_chain: /home/fennel/chainspecs/production-raw.json  # Path to chain spec file
+    # === Fennel Chain Configuration (Bullet-proof Pattern) ===
     node_user: fennel
+    node_app_name: fennel-node
+    base_path: /home/fennel/.local/share/polkadot
+    chain_spec: /home/fennel/chainspecs/production-raw.json
+    telemetry_url: '"wss://telemetry.polkadot.io/submit/ 0"'
     
-    # Node name override (Parity collection will use this instead of IP address)
-    node_name: "oracle-fennel-validator"
-    
-    # Binary download (following official pattern)
+    # Binary configuration
+    node_binary_version: v0.5.9
     node_binary: https://github.com/CorruptedAesthetic/fennel-solonet/releases/download/fennel-node-0.5.9/fennel-node-linux-x86_64
     node_binary_checksum: "sha256:93c2651c55a5fdaa4ee6d5399b0e961a159235fde4f4fa75b384a0c1b13f03b5"
     
-    # Validator role configuration
+    # Standard Parity collection variables
     node_role: validator
+    node_chain: "{{ chain_spec }}"
+    node_p2p_private_key: ""  # Let the node auto-generate
     
-    # Chain specification download - using the correct variable name
-    node_chain_chainspec_url: https://github.com/CorruptedAesthetic/fennel-solonet/releases/latest/download/production-raw.json
+    # Override telemetry URL with correct format (Parity template adds quotes automatically)
+    node_telemetry_url: "wss://telemetry.polkadot.io/submit/ 0"
     
-    # Generate network key automatically
-    node_chain_key_generate: true
-    
-    # Key injection configuration (using official structure)
-    # IMPORTANT: Using temporary seeds for initial startup only
-    # Production keys will be generated via author_rotateKeys RPC
-    key_inject_relay_chain_rpc_port: 9944
-    key_inject_relay_chain_key_list:
-      - type: "aura"
-        scheme: "sr25519"
-        priv_key: "{{ aura_seed | default('//Alice') }}"  # Temporary for startup
-      - type: "gran"
-        scheme: "ed25519"
-        priv_key: "{{ grandpa_seed | default('//Alice') }}"  # Temporary for startup
-
-  roles:
-    - paritytech.chain.node         # Deploy binary and create systemd service
-    - paritytech.chain.key_inject   # Inject temporary keys for startup
+    # Set a valid node name (no dots allowed in Substrate node names)
+    node_public_name: "fennel-validator-{{ ansible_hostname }}"
 
   pre_tasks:
-    - name: Create chainspecs directory
+    # Ensure base path exists and is writeable BEFORE any service attempts
+    - name: Ensure base path exists and is writeable
+      file:
+        path: "{{ base_path }}"
+        state: directory
+        owner: "{{ node_user }}"
+        group: "{{ node_user }}"
+        mode: "0750"
+
+    - name: Ensure chainspecs directory exists with proper ownership
       file:
         path: /home/fennel/chainspecs
         state: directory
-        owner: fennel
-        group: fennel
-        mode: '0755'
+        owner: "{{ node_user }}"
+        group: "{{ node_user }}"
+        mode: "0755"
 
     - name: Download Fennel production chain specification
       get_url:
         url: https://github.com/CorruptedAesthetic/fennel-solonet/releases/latest/download/production-raw.json
-        dest: /home/fennel/chainspecs/production-raw.json
-        owner: fennel
-        group: fennel
-        mode: '0644'
+        dest: "{{ chain_spec }}"
+        owner: "{{ node_user }}"
+        group: "{{ node_user }}"
+        mode: "0644"
         force: yes
+
+    - name: Install required packages for stash account generation
+      package:
+        name:
+          - jq
+        state: present
+
+  roles:
+    - paritytech.chain.node         # Deploy binary and create systemd service
 
   post_tasks:
     - name: Wait for Fennel node to start
@@ -69,7 +71,7 @@
         host: localhost
         delay: 15
         timeout: 120
-      when: generate_production_keys | default(true)
+      when: generate_keys | default(true)
 
     - name: Generate production session keys (SECURE METHOD)
       uri:
@@ -86,109 +88,212 @@
       register: session_keys_response
       retries: 5
       delay: 10
-      when: generate_production_keys | default(true)
+      when: generate_keys | default(true)
 
     - name: Extract session keys from response
       set_fact:
         production_session_keys: "{{ session_keys_response.json.result }}"
       when: 
-        - generate_production_keys | default(true)
+        - generate_keys | default(true)
         - session_keys_response.json.result is defined
 
-    - name: Display production session keys for registration
+    - name: Generate stash account using Fennel binary
+      shell: |
+        # Generate a new stash account using the Fennel node binary
+        FENNEL_BIN="/home/fennel/bin/fennel-node/node"
+        STASH_INFO=$($FENNEL_BIN key generate --output-type json --scheme sr25519)
+        
+        # Extract the SS58 address, public key, and mnemonic
+        SS58_ADDRESS=$(echo "$STASH_INFO" | jq -r '.ss58Address')
+        PUBLIC_KEY=$(echo "$STASH_INFO" | jq -r '.publicKey')
+        MNEMONIC=$(echo "$STASH_INFO" | jq -r '.secretPhrase')
+        
+        # Create the stash account info file using jq to ensure proper JSON formatting
+        echo "{}" | jq \
+          --arg ss58 "$SS58_ADDRESS" \
+          --arg pubkey "$PUBLIC_KEY" \
+          --arg mnemonic "$MNEMONIC" \
+          --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          '{
+            ss58Address: $ss58,
+            publicKey: $pubkey,
+            secretPhrase: $mnemonic,
+            generated: $timestamp,
+            network: "fennel",
+            purpose: "validator_stash_account"
+          }' > /home/fennel/stash-account.json
+        
+        # Set proper permissions (readable only by fennel user)
+        chown fennel:fennel /home/fennel/stash-account.json
+        chmod 600 /home/fennel/stash-account.json
+        
+        # Output the SS58 address for use in next task
+        echo "$SS58_ADDRESS"
+      register: stash_generation_result
+      become: yes
+      when: 
+        - generate_keys | default(true)
+        - generate_stash | default(true)
+
+    - name: Extract stash account address
+      set_fact:
+        stash_address: "{{ stash_generation_result.stdout.strip() }}"
+      when: 
+        - generate_keys | default(true)
+        - generate_stash | default(true)
+        - stash_generation_result.stdout is defined
+
+    - name: Display complete validator registration information (with stash account)
       debug:
         msg: |
           ╭══════════════════════════════════════════════════════════════╮
-          │  🔑 PRODUCTION SESSION KEYS GENERATED                        │
+          │  🔑 COMPLETE VALIDATOR REGISTRATION BUNDLE                   │
           │                                                              │
-          │  ⚠️  IMPORTANT: Send these keys to Fennel Labs for           │
+          │  ⚠️  IMPORTANT: Send this information to Fennel Labs for     │
           │      validator registration on the production network        │
           │                                                              │
-          │  Stash Account : <GENERATE-WITH-generate-stash-account.yml>  │
-          │  Session Keys  : {{ production_session_keys }}               │
+          │  🏦 Stash Account: {{ stash_address }}                              │
+          │  🔑 Session Keys:  {{ production_session_keys }}               │
           │                                                              │
-          │  ✅ Keys generated using secure author_rotateKeys method     │
-          │  ✅ No risk of key reuse or slashing                        │
+          │  ✅ Stash account generated with secure random mnemonic     │
+          │  ✅ Session keys generated using author_rotateKeys method   │
+          │  ✅ Network key auto-generated by Substrate                  │
           │  ✅ Following Parity's official best practices              │
           │                                                              │
           │  Next Steps:                                                 │
-          │  1. Generate stash account (ansible-playbook generate-stash-account.yml) │
-          │  2. Send both stash account & session keys to Fennel Labs   │
-          │  3. Fennel Labs will handle funding & validator setup       │
+          │  1. Send BOTH stash address & session keys to Fennel Labs   │
+          │  2. Fennel Labs will fund the stash account                 │
+          │  3. Fennel Labs will register validator on-chain            │
           │  4. Wait for confirmation - validator activated automatically │
           │                                                              │
           │  📧 Contact: info@fennellabs.com                            │
           │  Subject: Validator Registration Request                     │
           │                                                              │
-          │  💡 Fennel Labs handles all on-chain operations!            │
+          │  🔒 Stash account mnemonic saved securely on validator      │
+          │  💡 Network key auto-created as intended by Substrate!      │
           ╰══════════════════════════════════════════════════════════════╯
       when: 
-        - generate_production_keys | default(true)
+        - generate_keys | default(true)
+        - generate_stash | default(true)
+        - production_session_keys is defined
+        - stash_address is defined
+
+    - name: Display session keys only (no stash account generated)
+      debug:
+        msg: |
+          ╭══════════════════════════════════════════════════════════════╮
+          │  🔑 VALIDATOR SESSION KEYS GENERATED                         │
+          │                                                              │
+          │  ⚠️  IMPORTANT: Send session keys to Fennel Labs for         │
+          │      validator registration on the production network        │
+          │                                                              │
+          │  🔑 Session Keys:  {{ production_session_keys }}               │
+          │                                                              │
+          │  ✅ Session keys generated using author_rotateKeys method   │
+          │  ✅ Network key auto-generated by Substrate                  │
+          │  ✅ Following Parity's official best practices              │
+          │                                                              │
+          │  Next Steps:                                                 │
+          │  1. Create your own stash account with sufficient funds     │
+          │  2. Send stash address & session keys to Fennel Labs        │
+          │  3. Fennel Labs will register validator on-chain            │
+          │  4. Wait for confirmation - validator activated automatically │
+          │                                                              │
+          │  📧 Contact: info@fennellabs.com                            │
+          │  Subject: Validator Registration Request                     │
+          │                                                              │
+          │  💡 Network key auto-created as intended by Substrate!      │
+          │  ℹ️  To generate stash account: Add -e generate_stash=true  │
+          ╰══════════════════════════════════════════════════════════════╯
+      when: 
+        - generate_keys | default(true)
+        - not (generate_stash | default(true))
         - production_session_keys is defined
 
-    - name: Save session keys for later rotation
+    - name: Save complete registration information for later reference
       copy:
         content: |
-          # Current Session Keys (generated {{ ansible_date_time.iso8601 }})
-          # These should be rotated once connected to Fennel mainnet
+          # Fennel Validator Registration Bundle
+          # Generated: {{ ansible_date_time.iso8601 }}
+          # Validator: {{ node_public_name }}
           
-          Session Keys: {{ production_session_keys }}
+          ## SEND THIS INFORMATION TO FENNEL LABS
           
-          # To rotate keys when connected to mainnet, run:
-          # curl -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"author_rotateKeys","params":[],"id":1}' http://localhost:9944
-        dest: /home/fennel/session-keys-backup.txt
-        owner: fennel
-        group: fennel
+          ### Stash Account
+          Address: {{ stash_address | default('ERROR: Not generated') }}
+          
+          ### Session Keys
+          {{ production_session_keys | default('ERROR: Not generated') }}
+          
+          ## Registration Instructions
+          
+          Email the above information to Fennel Labs:
+          - Email: info@fennellabs.com
+          - Subject: Validator Registration Request
+          
+          Include in your email:
+          1. Stash Account Address (above)
+          2. Session Keys (above)
+          3. Validator name: {{ node_public_name }}
+          4. Server location/provider
+          
+          ## What Happens Next
+          
+          1. Fennel Labs will fund your stash account with tokens
+          2. Fennel Labs will bind your session keys to your stash account
+          3. Fennel Labs will register your validator on the network
+          4. Your validator will become active in the next session
+          
+          ## Security Notes
+          
+          - Your stash account mnemonic is saved at: /home/fennel/stash-account.json
+          - This file is only readable by the fennel user (permissions: 600)
+          - Network key auto-generated at: {{ base_path }}/chains/fennel_production/network/secret_ed25519
+          - Session keys are stored securely in the node's keystore
+          
+          ## Verification
+          
+          After registration, you can verify your validator is active:
+          
+          ```bash
+          # Check if validator is in active set
+          curl -H "Content-Type: application/json" \
+            -d '{"id":1,"jsonrpc":"2.0","method":"session_getValidators","params":[]}' \
+            http://localhost:9944
+          
+          # Check validator status
+          sudo systemctl status fennel-node
+          
+          # View validator logs
+          sudo journalctl -u fennel-node -f
+          ```
+        dest: /home/fennel/validator-registration-bundle.txt
+        owner: "{{ node_user }}"
+        group: "{{ node_user }}"
         mode: '0600'
       when: 
-        - generate_production_keys | default(true)
+        - generate_keys | default(true)
         - production_session_keys is defined
+        - stash_address is defined
 
-    - name: Generate stash account (if requested)
-      block:
-        - name: Generate stash account keys
-          shell: |
-            sudo -u fennel /home/fennel/bin/fennel-node/node key generate --output-type json --words 24
-          register: stash_account_result
-          
-        - name: Save stash account information
-          copy:
-            content: |
-              # Stash Account Generated {{ ansible_date_time.iso8601 }}
-              # IMPORTANT: Keep this information secure and backed up!
-              
-              {{ stash_account_result.stdout | from_json | to_nice_json }}
-              
-              # Next steps:
-              # 1. Fund this account with tokens
-              # 2. Use this account to call staking.validate()
-              # 3. Set session keys in the validator setup
-              
-              # Session Keys to use:
-              # {{ production_session_keys }}
-            dest: /home/fennel/stash-account-info.json
-            owner: fennel
-            group: fennel
-            mode: '0600'
-            
-        - name: Display stash account information
-          debug:
-            msg: |
-              ╭══════════════════════════════════════════════════════════════╮
-              │  🏦 STASH ACCOUNT GENERATED                                  │
-              │                                                              │
-              │  ⚠️  CRITICAL: Keep this information secure!                 │
-              │                                                              │
-              │  Account Address: {{ (stash_account_result.stdout | from_json).ss58Address }}
-              │  Public Key: {{ (stash_account_result.stdout | from_json).publicKey }}
-              │                                                              │
-              │  💾 Full details saved to: /home/fennel/stash-account-info.json
-              │                                                              │
-              │  Next Steps:                                                 │
-              │  1. Fund this account with Fennel tokens                    │
-              │  2. Use this account to register as validator               │
-              │  3. Set session keys in validator setup                     │
-              │                                                              │
-              │  ⚠️  BACKUP THE SEED PHRASE - You cannot recover without it! │
-              ╰══════════════════════════════════════════════════════════════╯
-      when: generate_stash_account | default(false)
+    - name: Verify network key was auto-created
+      stat:
+        path: "{{ base_path }}/chains/fennel_production/network/secret_ed25519"
+      register: network_key_stat
+      when: generate_keys | default(true)
+
+    - name: Display network key verification
+      debug:
+        msg: |
+          ╭══════════════════════════════════════════════════════════════╮
+          │  🔐 NETWORK KEY VERIFICATION                                 │
+          │                                                              │
+          │  Network key auto-created: {{ 'YES ✅' if network_key_stat.stat.exists else 'NO ❌' }}
+          │  Location: {{ base_path }}/chains/fennel_production/network/secret_ed25519
+          │  Permissions: {{ network_key_stat.stat.mode if network_key_stat.stat.exists else 'N/A' }}
+          │                                                              │
+          │  This confirms Substrate's automatic key generation works!   │
+          ╰══════════════════════════════════════════════════════════════╯
+      when: 
+        - generate_keys | default(true)
+        - network_key_stat is defined

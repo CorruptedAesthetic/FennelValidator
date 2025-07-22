@@ -14,12 +14,16 @@ cd FennelValidator
 
 # 2B. Experienced users: Direct deployment (assumes ubuntu SSH user)
 ./fennel-bootstrap.sh YOUR_SERVER_IP
+
+# 2C. With automatic stash account generation (includes subkey installation)
+./fennel-bootstrap.sh YOUR_SERVER_IP -e generate_stash=true
 ```
 
 **Benefits:**
 - ✅ **Production-ready** - Uses Parity's battle-tested Ansible roles
 - ✅ **Cloud-agnostic** - Works on any Linux server (AWS, GCP, Azure, bare metal)
 - ✅ **Secure key management** - Keys generated inside the validator, never exposed
+- ✅ **Optional stash account generation** - Auto-generate complete validator bundle
 - ✅ **No restart required** - Dynamic validator registration
 - ✅ **Professional monitoring** - Built-in metrics and logging
 - ✅ **Configuration wizard** - Interactive setup for first-time users
@@ -30,7 +34,8 @@ cd FennelValidator
 3. **Secure Key Generation** - Creates temporary keys locally for initial setup
 4. **Validator Deployment** - Configures and starts validator with native binary
 5. **Key Rotation** - Node generates fresh, secure keys internally
-6. **Registration Prep** - Displays session key bundle for admin registration
+6. **Stash Account Generation** - (Optional) Creates funded account for validator
+7. **Registration Prep** - Displays session key bundle for admin registration
 
 **Total time:** 3-5 minutes | **Difficulty:** Professional | **Security:** Enterprise-grade
 
@@ -86,3 +91,27 @@ This checks all prerequisites and validates your configuration files.
 **Ready to start?** Check out [STEP_BY_STEP_INSTRUCTIONS.md](STEP_BY_STEP_INSTRUCTIONS.md) for complete deployment guidance!
 
 **Need help?** Review [OPERATOR-REQUIREMENTS.md](OPERATOR-REQUIREMENTS.md) for server requirements and [PRODUCTION-DEPLOYMENT.md](PRODUCTION-DEPLOYMENT.md) for detailed setup instructions.
+
+## 🔑 Stash Account Options
+
+### Option 1: Auto-Generate Stash Account (Easiest)
+```bash
+# Generates complete validator bundle with stash account
+./configure-deployment.sh  # Select "Yes" for stash generation
+# OR
+cd ansible && ansible-playbook -i inventory validator.yml -e generate_keys=true -e generate_stash=true
+```
+
+**Requirements:** Uses Fennel binary (already deployed)
+**Output:** Complete registration bundle with both stash address and session keys
+
+### Option 2: Bring Your Own Stash Account (Manual)
+```bash
+# Generates only session keys
+./configure-deployment.sh  # Select "No" for stash generation  
+# OR
+cd ansible && ansible-playbook -i inventory validator.yml -e generate_keys=true
+```
+
+**Requirements:** Only Ansible and jq
+**Output:** Session keys only - you create your own funded stash account
