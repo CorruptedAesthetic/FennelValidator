@@ -293,6 +293,12 @@ YOUR_SERVER_IP | SUCCESS => {
 ```
 
 ### Step 4: Deploy Validator
+1.) Change to Ansible Directory: 
+
+cd ansible/
+
+2.) replace "my-inventory validator.yml" with the name of your custom-invetory file
+
 ```bash
 ansible-playbook -i my-inventory validator.yml -e generate_keys=true
 ```
