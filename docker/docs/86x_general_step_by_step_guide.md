@@ -2,7 +2,7 @@
 
 A validator host only needs four public inbound ports (22, 80, 443, 30333).
 
-Docker publishes the JSON‑RPC server on **127 .0 .0 .1 : 9944**; the node is started with `--rpc-external --rpc-cors all` so nginx (on the same VM, via the `docker0` bridge) can proxy WebSocket traffic over TLS.  Because 9944 never leaves loop‑back, Unsafe RPC is invisible to the Internet.  The rest of the guide covers OS prerequisites, Docker install, key generation, nginx + Certbot, and validator registration.([Polkadot Docs](https://docs.polkadot.com/infrastructure/running-a-node/setup-full-node/?utm_source=chatgpt.com), [DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04?utm_source=chatgpt.com), [nginx.org](https://nginx.org/en/docs/http/websocket.html?utm_source=chatgpt.com))
+Docker publishes the JSON‑RPC server on **127 .0 .0 .1 : 9944**; the node is started with `--rpc-external --rpc-cors all` so nginx (on the same VM, via the `docker0` bridge) can proxy WebSocket traffic over TLS.  Because 9944 never leaves loop‑back, Unsafe RPC is invisible to the Internet.  The rest of the guide covers OS prerequisites, Docker install, key generation, nginx + Certbot, and validator registration.
 
 ---
 
@@ -64,7 +64,7 @@ docker run --rm parity/subkey:latest generate --scheme sr25519
 
 ```
 
-Store the mnemonic offline; note the SS58 stash address—you’ll send it to Fennel Labs later.([Polkadot Docs](https://docs.polkadot.com/infrastructure/running-a-node/setup-full-node/?utm_source=chatgpt.com))
+Store the mnemonic offline; note the SS58 stash address—you’ll send it to Fennel Labs later.
 
 ---
 
@@ -96,7 +96,7 @@ sudo docker run -d --name fennel-validator \
 ```
 
 - `-rpc-external` allows nginx (172 .17 .x .x) to connect; 9944 is still private because it is published only to loop‑back.
-- `-rpc-cors all` removes the Origin check that otherwise returns 403 for WebSocket upgrades.([guide.kusama.network](https://guide.kusama.network/docs/maintain-rpc?utm_source=chatgpt.com))
+- `-rpc-cors all` removes the Origin check that otherwise returns 403 for WebSocket upgrades.
 
 ---
 
@@ -147,7 +147,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ```
 
-Upgrade headers and time‑outs follow nginx’s WebSocket guide.([nginx.org](https://nginx.org/en/docs/http/websocket.html?utm_source=chatgpt.com)) Certbot auto‑renews certificates.([DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04?utm_source=chatgpt.com), [certbot.eff.org](https://certbot.eff.org/instructions?os=snap&ws=nginx&utm_source=chatgpt.com))
+Upgrade headers and time‑outs follow nginx’s WebSocket guide. Certbot auto‑renews certificates.
 
 ---
 
@@ -175,7 +175,7 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 
 1. Polkadot‑JS > Developer > RPC `author_rotateKeys` → copy hex key.
 2. Developer > Extrinsics `session.setKeys(keys, 0x00)` from stash.
-3. Wait two sessions; confirm in `session.validators`.([Polkadot Docs](https://docs.polkadot.com/infrastructure/running-a-node/setup-full-node/?utm_source=chatgpt.com))
+3. Wait two sessions; confirm in `session.validators`.
 4. Email stash SS58 + session pubkey to [**info@fennellabs.com**](mailto:info@fennellabs.com).
 
 ---
@@ -192,7 +192,7 @@ ssh -L 9944:localhost:9944 ubuntu@<VM-IP>
 
 ## 10 Operations
 
-- **TLS renew:** `certbot renew --dry-run` monthly cron.([DigitalOcean](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04?utm_source=chatgpt.com))
+- **TLS renew:** `certbot renew --dry-run` monthly cron.
 - **Node upgrade:** `docker pull` → stop → rm → re‑run.
 - **Firewall:** keep only 22/80/443/30333 open (cloud + UFW).
 - **fail2ban:** ban IPs that hit 429 in `/var/log/nginx/access.log`.

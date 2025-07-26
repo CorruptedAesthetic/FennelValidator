@@ -79,7 +79,7 @@ docker run --rm parity/subkey:latest generate --scheme sr25519
 
 ```
 
-Save the mnemonic **offline**; note the SS58 *stash* address.([Polkadot Docs](https://docs.polkadot.com/infrastructure/running-a-node/setup-full-node/?utm_source=chatgpt.com))
+Save the mnemonic **offline**; note the SS58 *stash* address.
 
 ---
 
@@ -111,7 +111,7 @@ sudo docker run -d --name fennel-validator \
 
 ```
 
-`Unsafe` is acceptable because 9944 is loop‑back‑only.([Polkadot Docs](https://docs.polkadot.com/infrastructure/running-a-node/setup-full-node/?utm_source=chatgpt.com))
+`Unsafe` is acceptable because 9944 is loop‑back‑only.
 
 Monitor sync:
 
@@ -209,7 +209,7 @@ ssh -L 9944:localhost:9944 ubuntu@<VM-IP> -i ~/.ssh/fennel_oracle
 
 ```
 
-SSH port‑forward lets you bypass TLS for local testing.([Polkadot Docs](https://docs.polkadot.com/develop/parachains/maintenance/runtime-metrics-monitoring/?utm_source=chatgpt.com))
+SSH port‑forward lets you bypass TLS for local testing.
 
 ---
 
