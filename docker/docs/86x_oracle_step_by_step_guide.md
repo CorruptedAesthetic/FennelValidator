@@ -14,7 +14,7 @@ Oracle Compute uses the public part (`.pub`) at launch.([Oracle Documentation](h
 ### 1.2 Launch the instance
 
 - **Shape**: VM.Standard.E4.Flex (2 OCPU ≈ 2 vCPU, 8 GB RAM).
-- **Boot volume**: 50 GB.
+- **Boot volume**: 200 GB.
 - **VCN**: new or existing public subnet; leave MTU at 9000 (Oracle’s jumbo frame).
 - **Attach SSH key** in the wizard.
 
