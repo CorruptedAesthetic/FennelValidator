@@ -4,18 +4,32 @@
 
 ## 🚀 Quick Start
 
-```bash
-# 1. Clone this repository
-git clone https://github.com/CorruptedAesthetic/FennelValidator.git
-cd FennelValidator
+### **🐳 Docker Deployment (Recommended)**
+**Step-by-step manual setup for single validators:**
 
-# 2A. First-time users: Run configuration wizard
+📖 **[Complete Docker Guide](docker/docs/86x_general_step_by_step_guide.md)** — Works on any cloud provider
+
+**Quick version:**
+```bash
+# 1. Create VM (Ubuntu 22.04, 8GB RAM, open ports 22,80,443,30333)
+# 2. Install Docker: sudo apt install -y docker.io
+# 3. Download chainspec and generate keys
+# 4. Run validator container
+# 5. Setup SSL with nginx + Let's Encrypt
+# 6. Register with Fennel Labs
+```
+
+### **⚙️ Ansible Automation (Advanced)**
+**For multi-server deployments:**
+
+```bash
+# Configuration wizard
 ./configure-deployment.sh
 
-# 2B. Experienced users: Direct deployment (assumes ubuntu SSH user)
+# Direct deployment
 ./fennel-bootstrap.sh YOUR_SERVER_IP
 
-# 2C. With automatic stash account generation (includes subkey installation)
+# With stash account generation
 ./fennel-bootstrap.sh YOUR_SERVER_IP -e generate_stash=true
 ```
 

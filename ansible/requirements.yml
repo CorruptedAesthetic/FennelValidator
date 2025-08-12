@@ -1,4 +1,0 @@
----
-collections:
-  - name: paritytech.chain
-    version: ">=1.10.0"

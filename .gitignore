@@ -14,6 +14,17 @@ scripts/
 bin/
 test-bin/
 
+# Ansible and operational files (private infrastructure)
+docs/
+configure-deployment.sh
+connect-to-instance.sh
+fennel-bootstrap.sh
+OPERATOR-REQUIREMENTS.md
+PRODUCTION-DEPLOYMENT.md
+STEP_BY_STEP_INSTRUCTIONS.md
+verify-ansible-setup.sh
+ansible/
+
 # Build and temporary files
 target/
 Cargo.lock
