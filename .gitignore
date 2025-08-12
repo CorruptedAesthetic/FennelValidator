@@ -146,4 +146,5 @@ Thumbs.db
 temp/
 
 # Internal private documentation
-docker/docs/internalprivate/ 
+docker/docs/internalprivate/
+docs/INTERNALPRIVATE/ 
