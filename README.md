@@ -1,7 +1,25 @@
-Hello! and welcome! This is a guide to deploy a Fennel Validator. It is agnostic to any cloud platform. You can find more catered instructions in the docker/docs folder. We hope to add more in the future. We also hope to launch instructions for Ansible deployments. 
+# 🌿 Fennel Validator Setup Guide
 
-Please reach out to info@fennellabs.com with any problems that you may have.
+```
+         🌿
+        /|\
+       / | \
+      /  |  \
+     🌱  |  🌱
+        /|\
+       / | \
+      🌿 | 🌿
+        FNL
+```
 
+**Deploy a Fennel Solonet validator on any major cloud provider**  
+*(AWS, GCP, Azure, Oracle Cloud, DigitalOcean, etc.)*
+
+---
+
+Hello! and welcome! This is a comprehensive guide to deploy a Fennel Validator. It is agnostic to any cloud platform. You can find more specialized instructions in the docker/docs folder for specific cloud providers. 
+
+**Need help?** Please reach out to **info@fennellabs.com** with any problems that you may have.
 
 ## Quick executive summary
 
