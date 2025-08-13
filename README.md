@@ -211,9 +211,9 @@ sudo docker run -d --name fennel-validator --user 1001:1001 -p 30333:30333 -p 12
 ```
 
 **Key points:**
-- `--node-key-file` uses the pre-provisioned key, preventing NetworkKeyNotFound errors
+- `--node-key-file` uses the pre-provisioned key
 - `--user 1001:1001` ensures proper permissions
-- `--pruning 1000` keeps only the last 1000 blocks to save disk space
+- `--pruning 1000` keeps only the last 1000 blocks to save disk space; an archive node would not use prune flags and would run parity db
 - RPC is bound to loopback (127.0.0.1) for security
 
 **Pruning Options**: 
