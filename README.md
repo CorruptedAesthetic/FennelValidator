@@ -3,6 +3,7 @@
 Hello! and welcome! 
 
 This node is the foundation to sync, validate, and archive Whiteflag communications data. We will release instructions for deploying node infrastructure on other cloud providers, as well as for archives, RPCs, and other useful infrastructures. Stay tuned!
+Once teated appropriately this repo will be found on the Fennel Labs Github: https://github.com/fennelLabs
 
 **Need help?** Please reach out to **info@fennellabs.com** with any problems that you may have.
 
