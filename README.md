@@ -398,6 +398,8 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 
 ## 10 Rotate session keys & register
 
+(will add screenshots here soon...)
+
 1. Go to [Polkadot.js Apps](https://polkadot.js.org/apps/)
 2. Click "Fennel Production Network" 
 3. Scroll all the way down and click "development" 
