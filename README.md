@@ -401,11 +401,11 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 (will add screenshots here soon...)
 
 1. Go to [Polkadot.js Apps](https://polkadot.js.org/apps/)
-2. Click "Fennel Production Network" 
+2. Click the "Polkadot Network" icon in the upper left corner of the screen.  
 3. Scroll all the way down and click "development" 
-4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right.
-5. Click Developer > RPC Calls. Create the setting: `author_rotateKeys` (copy session key hex).
-6. Email stash SS58 (from step 4) + session key hex (from step 5) to [**info@fennellabs.com**](mailto:info@fennellabs.com). 
+4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right of the pop out rectangle.
+5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy session key hex).
+6. Email stash SS58 (from step 4) + session key hex (from step 10) to info@fennellabs.com :)
 7. Fennel Labs will set you up as a validator. Add your stash ID to polkadot.js in the meantime. 
 8. Setup Polkadot developer signer extension
 9. Add your ss58 secret mnemonic to add your account using "import account from existing seed." Setup your name and intended password.
@@ -490,11 +490,4 @@ SSH port‑forward lets you bypass TLS for local testing.
 - `websocat wss://rpc.yourdomain.com` → JSON response
 - Block height in `docker logs -f fennel-validator | grep Imported` matches network
 
-You now have a hardened Fennel validator that is:
-- ✅ **TLS-secured** with Let's Encrypt certificates
-- ✅ **Rate-limited** to prevent abuse
-- ✅ **Cloud-agnostic** - works on any major cloud provider
-- ✅ **Secure** - Unsafe RPC kept off the public Internet
-- ✅ **Production-ready** with proper monitoring and maintenance procedures
 
-This guide provides a robust foundation for deploying Fennel validators across different cloud providers while maintaining security best practices and SSL/TLS termination.
