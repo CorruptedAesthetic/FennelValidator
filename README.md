@@ -1,9 +1,8 @@
 # 🌿 Fennel Validator Setup Guide
 
-Hello! and welcome! This is a comprehensive guide to deploy a Fennel Validator. It is agnostic to any cloud platform. You can find more specialized instructions in the docker/docs folder for specific cloud providers.
+Hello! and welcome! 
 
 This node is the foundation to sync, validate, and archive Whiteflag communications data. We will release instructions for deploying node infrastructure on other cloud providers, as well as for archives, RPCs, and other useful infrastructures. Stay tuned!
-
 
 **Need help?** Please reach out to **info@fennellabs.com** with any problems that you may have.
 
