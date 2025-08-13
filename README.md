@@ -124,10 +124,10 @@ Save the mnemonic **offline**; note the SS58 *stash* address.
 
 ---
 
-## 5 Pre-provision Network Identity Key 
+## 5 Generate Node Key
 
 
-### Option A: Automated Key Generation (Recommended)
+### Option A: Pregenerate Node Key (Recommended)
 
 ```bash
 # Create the network directory structure and set ownership to your hardened UID
