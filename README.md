@@ -404,7 +404,7 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 
 2. Click the "Polkadot Network" icon in the upper left corner of the screen.  
 
-   [![Step 2: Network Selection](docker/screenshots/readmesetup/Step2.png)]
+   [![Step 2: Network Selection](docker/screenshots/readmesetup/Step2.png)](docker/screenshots/readmesetup/Step2.png)
 
 3. Scroll all the way down and click "development" 
 4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right of the pop out rectangle.
@@ -412,7 +412,7 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
    [![Step 3 & 4: Development and Custom Endpoint](docker/screenshots/readmesetup/Step3%20%2B%204.png)](docker/screenshots/readmesetup/Step3%20%2B%204.png)
 
 
-5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy public session key generated ).
+5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy public session key generated.
 
    [![Step 5a: Developer Menu](docker/screenshots/readmesetup/Step5a.png)](docker/screenshots/readmesetup/Step5a.png)
 
