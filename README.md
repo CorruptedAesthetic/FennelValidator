@@ -1,17 +1,5 @@
 # 🌿 Fennel Validator Setup Guide
 
-```
-         🌿
-        /|\
-       / | \
-      /  |  \
-     🌱  |  🌱
-        /|\
-       / | \
-      🌿 | 🌿
-        FNL
-```
-
 **Deploy a Fennel Solonet validator on any major cloud provider**  
 *(AWS, GCP, Azure, Oracle Cloud, DigitalOcean, etc.)*
 
@@ -192,7 +180,7 @@ sudo chown 1001:1001 /opt/fennel/db/chains/fennel_production/network/secret_ed25
 ## 6 Run the validator container
 
 ```bash
-sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2
+sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3
 
 sudo docker run -d --name fennel-validator \
   --user 1001:1001 \
@@ -200,7 +188,7 @@ sudo docker run -d --name fennel-validator \
   -p 127.0.0.1:9944:9944 \
   -v /opt/fennel/db:/data \
   -v /opt/fennel/specs:/specs:ro \
-  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2 \
+  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3 \
   --base-path /data \
   --chain /specs/production-raw.json \
   --validator \
@@ -220,7 +208,7 @@ sudo docker run -d --name fennel-validator \
 **Single-line alternative (avoids line-continuation issues):**
 
 ```bash
-sudo docker run -d --name fennel-validator --user 1001:1001 -p 30333:30333 -p 127.0.0.1:9944:9944 -v /opt/fennel/db:/data -v /opt/fennel/specs:/specs:ro ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2 --base-path /data --chain /specs/production-raw.json --validator --node-key-file /data/chains/fennel_production/network/secret_ed25519 --port 30333 --rpc-port 9944 --rpc-external --rpc-cors all --rpc-methods Unsafe --rpc-rate-limit 100 --pruning 1000 --name fennel-docker-validator --bootnodes /dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWFRgPPfukBwCKcw5BXdKwLwj15tHgEYpHyNdqownMTJ3d --bootnodes /dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWHVkUjgF8zLY4Y8Cmf9kiJQE9THRkhovJPreHAqWjSNzH
+sudo docker run -d --name fennel-validator --user 1001:1001 -p 30333:30333 -p 127.0.0.1:9944:9944 -v /opt/fennel/db:/data -v /opt/fennel/specs:/specs:ro ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3 --base-path /data --chain /specs/production-raw.json --validator --node-key-file /data/chains/fennel_production/network/secret_ed25519 --port 30333 --rpc-port 9944 --rpc-external --rpc-cors all --rpc-methods Unsafe --rpc-rate-limit 100 --pruning 1000 --name fennel-docker-validator --bootnodes /dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWFRgPPfukBwCKcw5BXdKwLwj15tHgEYpHyNdqownMTJ3d --bootnodes /dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWHVkUjgF8zLY4Y8Cmf9kiJQE9THRkhovJPreHAqWjSNzH
 ```
 
 **Key points:**
@@ -509,3 +497,146 @@ You now have a hardened Fennel validator that is:
 - ✅ **Production-ready** with proper monitoring and maintenance procedures
 
 This guide provides a robust foundation for deploying Fennel validators across different cloud providers while maintaining security best practices and SSL/TLS termination.
+
+---
+
+## 12 Updating Your Validator to a New Fennel Node Version
+
+When a new version of the Fennel node is released, you can update your running validator with minimal downtime. The process preserves your blockchain data, network identity, and configuration.
+
+### 12.1 Update Process Overview
+
+**Downtime**: ~20-30 seconds  
+**Data preservation**: ✅ Blockchain data, network keys, and configuration preserved  
+**Re-sync required**: ❌ No full re-synchronization needed  
+
+### 12.2 Step-by-Step Update Instructions
+
+**Step 1: Pull the new Docker image**
+```bash
+# Replace X.X.X with the new version number
+sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-X.X.X
+```
+
+**Step 2: Stop the current validator**
+```bash
+sudo docker stop fennel-validator
+```
+
+**Step 3: Remove the old container**
+```bash
+sudo docker rm fennel-validator
+```
+
+**Step 4: Start the new validator with the updated image**
+```bash
+# Replace X.X.X with the new version number
+sudo docker run -d --name fennel-validator \
+  --user 1001:1001 \
+  -p 30333:30333 \
+  -p 127.0.0.1:9944:9944 \
+  -v /opt/fennel/db:/data \
+  -v /opt/fennel/specs:/specs:ro \
+  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-X.X.X \
+  --base-path /data \
+  --chain /specs/production-raw.json \
+  --validator \
+  --node-key-file /data/chains/fennel_production/network/secret_ed25519 \
+  --port 30333 \
+  --rpc-port 9944 \
+  --rpc-external \
+  --rpc-cors all \
+  --rpc-methods Unsafe \
+  --rpc-rate-limit 100 \
+  --pruning 1000 \
+  --name fennel-docker-validator \
+  --bootnodes /dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWFRgPPfukBwCKcw5BXdKwLwj15tHgEYpHyNdqownMTJ3d \
+  --bootnodes /dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWHVkUjgF8zLY4Y8Cmf9kiJQE9THRkhovJPreHAqWjSNzH
+```
+
+**Step 5: Verify the update**
+```bash
+# Check that the container is running
+sudo docker ps
+
+# Check the initial logs
+sudo docker logs fennel-validator | head -20
+
+# Monitor sync progress
+sudo docker logs -f fennel-validator | grep Imported
+```
+
+### 12.3 Example: Updating from 0.6.2 to 0.6.3
+
+```bash
+# Pull new image
+sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3
+
+# Stop and remove old container
+sudo docker stop fennel-validator
+sudo docker rm fennel-validator
+
+# Start new container with updated image
+sudo docker run -d --name fennel-validator \
+  --user 1001:1001 \
+  -p 30333:30333 \
+  -p 127.0.0.1:9944:9944 \
+  -v /opt/fennel/db:/data \
+  -v /opt/fennel/specs:/specs:ro \
+  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3 \
+  --base-path /data \
+  --chain /specs/production-raw.json \
+  --validator \
+  --node-key-file /data/chains/fennel_production/network/secret_ed25519 \
+  --port 30333 \
+  --rpc-port 9944 \
+  --rpc-external \
+  --rpc-cors all \
+  --rpc-methods Unsafe \
+  --rpc-rate-limit 100 \
+  --pruning 1000 \
+  --name fennel-docker-validator \
+  --bootnodes /dns4/bootnode1.fennel.network/tcp/30333/p2p/12D3KooWFRgPPfukBwCKcw5BXdKwLwj15tHgEYpHyNdqownMTJ3d \
+  --bootnodes /dns4/bootnode2.fennel.network/tcp/30333/p2p/12D3KooWHVkUjgF8zLY4Y8Cmf9kiJQE9THRkhovJPreHAqWjSNzH
+
+# Verify the update
+sudo docker ps
+sudo docker logs fennel-validator | head -10
+```
+
+### 12.4 What Gets Preserved During Updates
+
+✅ **Blockchain database** (`/opt/fennel/db`) - No re-sync required  
+✅ **Network identity key** - Same peer ID maintained  
+✅ **SSL/TLS certificates** - nginx configuration unchanged  
+✅ **Validator registration** - No need to re-register  
+✅ **Custom configuration** - All settings preserved  
+
+### 12.5 Troubleshooting Updates
+
+**If the container fails to start:**
+```bash
+# Check for error messages
+sudo docker logs fennel-validator
+
+# Verify file permissions
+sudo ls -la /opt/fennel/db/chains/fennel_production/network/
+sudo chown -R 1001:1001 /opt/fennel/
+```
+
+**If sync is slow after update:**
+```bash
+# This is normal - the node needs to catch up on missed blocks
+# Monitor progress with:
+sudo docker logs -f fennel-validator | grep "Imported\|Idle"
+```
+
+**For urgent rollback to previous version:**
+```bash
+# Stop current container
+sudo docker stop fennel-validator && sudo docker rm fennel-validator
+
+# Start with previous version (replace with your previous version)
+sudo docker run -d --name fennel-validator --user 1001:1001 -p 30333:30333 -p 127.0.0.1:9944:9944 -v /opt/fennel/db:/data -v /opt/fennel/specs:/specs:ro ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2 [... same parameters as above ...]
+```
+**Need help with updates?** Contact **info@fennellabs.com** for assistance.

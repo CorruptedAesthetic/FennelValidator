@@ -139,7 +139,7 @@ sudo chown 1001:1001 /opt/fennel/db/chains/fennel_production/network/secret_ed25
 ## 5 Run the validator container
 
 ```bash
-sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2
+sudo docker pull ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3
 
 sudo docker run -d --name fennel-validator \
   --user 1001:1001 \
@@ -147,7 +147,7 @@ sudo docker run -d --name fennel-validator \
   -p 127.0.0.1:9944:9944 \
   -v /opt/fennel/db:/data \
   -v /opt/fennel/specs:/specs:ro \
-  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.2 \
+  ghcr.io/corruptedaesthetic/fennel-solonet:fennel-node-0.6.3 \
   --base-path /data \
   --chain /specs/production-raw.json \
   --validator \
