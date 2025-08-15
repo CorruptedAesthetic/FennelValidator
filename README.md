@@ -398,13 +398,32 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 
 ## 10 Rotate session keys & register
 
-(will add screenshots here soon...)
+### Step-by-Step Visual Guide
 
 1. Go to [Polkadot.js Apps](https://polkadot.js.org/apps/)
+
 2. Click the "Polkadot Network" icon in the upper left corner of the screen.  
+
+   [![Step 2: Network Selection](docker/screenshots/readmesetup/Step2.png)]
+
 3. Scroll all the way down and click "development" 
 4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right of the pop out rectangle.
-5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy session key hex).
+
+   [![Step 3 & 4: Development and Custom Endpoint](docker/screenshots/readmesetup/Step3%20%2B%204.png)](docker/screenshots/readmesetup/Step3%20%2B%204.png)
+
+
+5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy public session key generated ).
+
+   [![Step 5a: Developer Menu](docker/screenshots/readmesetup/Step5a.png)](docker/screenshots/readmesetup/Step5a.png)
+
+   [![Step 5b: RPC Calls](docker/screenshots/readmesetup/Step5b.png)](docker/screenshots/readmesetup/Step5b.png)
+
+   [![Step 5c: Author Rotate Keys](docker/screenshots/readmesetup/Step5c.png)](docker/screenshots/readmesetup/Step5c.png)
+
+   [![Step 5d: Copy Session Key](docker/screenshots/readmesetup/Step5d.png)](docker/screenshots/readmesetup/Step5d.png)
+
+
+
 6. Email stash SS58 (from step 4) + session key hex (from step 10) to info@fennellabs.com :)
 7. Fennel Labs will set you up as a validator. Add your stash ID to polkadot.js in the meantime. 
 8. Setup Polkadot developer signer extension
@@ -426,6 +445,8 @@ ssh -L 9944:localhost:9944 ubuntu@YOUR_VM_IP -i ~/.ssh/fennel_validator_key
 ```
 
 SSH port‑forward lets you bypass TLS for local testing.
+
+[![localhost:9944 Connection](docker/screenshots/readmesetup/localhost9944.png)](docker/screenshots/readmesetup/localhost9944.png)
 
 ---
 
