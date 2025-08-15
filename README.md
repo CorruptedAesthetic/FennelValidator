@@ -1,11 +1,10 @@
 # 🌿 Fennel Validator Setup Guide
 
-**Deploy a Fennel Solonet validator on any major cloud provider**  
-*(AWS, GCP, Azure, Oracle Cloud, DigitalOcean, etc.)*
+Hello! and welcome! 
 
----
+This node is the foundation to sync, validate, and archive Whiteflag communications data. We will release instructions for deploying node infrastructure on other cloud providers, as well as for archives, RPCs, and other useful infrastructures. Stay tuned!
 
-Hello! and welcome! This is a comprehensive guide to deploy a Fennel Validator. It is agnostic to any cloud platform. You can find more specialized instructions in the docker/docs folder for specific cloud providers. 
+Once tested appropriately this repo will be found on the Fennel Labs Github: https://github.com/fennelLabs
 
 **Need help?** Please reach out to **info@fennellabs.com** with any problems that you may have.
 
@@ -125,10 +124,10 @@ Save the mnemonic **offline**; note the SS58 *stash* address.
 
 ---
 
-## 5 Pre-provision Network Identity Key 
+## 5 Generate Node Key
 
 
-### Option A: Automated Key Generation (Recommended)
+### Option A: Pregenerate Node Key (Recommended)
 
 ```bash
 # Create the network directory structure and set ownership to your hardened UID
@@ -212,9 +211,9 @@ sudo docker run -d --name fennel-validator --user 1001:1001 -p 30333:30333 -p 12
 ```
 
 **Key points:**
-- `--node-key-file` uses the pre-provisioned key, preventing NetworkKeyNotFound errors
+- `--node-key-file` uses the pre-provisioned key
 - `--user 1001:1001` ensures proper permissions
-- `--pruning 1000` keeps only the last 1000 blocks to save disk space
+- `--pruning 1000` keeps only the last 1000 blocks to save disk space; an archive node would not use prune flags and would run parity db
 - RPC is bound to loopback (127.0.0.1) for security
 
 **Pruning Options**: 
@@ -399,12 +398,14 @@ A blank/502 on the root URL (`/`) is normal; the node does not serve GET.
 
 ## 10 Rotate session keys & register
 
+(will add screenshots here soon...)
+
 1. Go to [Polkadot.js Apps](https://polkadot.js.org/apps/)
-2. Click "Fennel Production Network" 
+2. Click the "Polkadot Network" icon in the upper left corner of the screen.  
 3. Scroll all the way down and click "development" 
-4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right.
-5. Click Developer > RPC Calls. Create the setting: `author_rotateKeys` (copy session key hex).
-6. Email stash SS58 (from step 4) + session key hex (from step 5) to [**info@fennellabs.com**](mailto:info@fennellabs.com). 
+4. Click "custom endpoint" add `wss://rpc.yourdomain.com` (replace with your domain), click "save" and "switch" in the upper right of the pop out rectangle.
+5. Click Developer > RPC Calls. Input the setting: `author_rotateKeys` . Submit. Copy session key hex).
+6. Email stash SS58 (from step 4) + session key hex (from step 10) to info@fennellabs.com :)
 7. Fennel Labs will set you up as a validator. Add your stash ID to polkadot.js in the meantime. 
 8. Setup Polkadot developer signer extension
 9. Add your ss58 secret mnemonic to add your account using "import account from existing seed." Setup your name and intended password.
@@ -489,14 +490,7 @@ SSH port‑forward lets you bypass TLS for local testing.
 - `websocat wss://rpc.yourdomain.com` → JSON response
 - Block height in `docker logs -f fennel-validator | grep Imported` matches network
 
-You now have a hardened Fennel validator that is:
-- ✅ **TLS-secured** with Let's Encrypt certificates
-- ✅ **Rate-limited** to prevent abuse
-- ✅ **Cloud-agnostic** - works on any major cloud provider
-- ✅ **Secure** - Unsafe RPC kept off the public Internet
-- ✅ **Production-ready** with proper monitoring and maintenance procedures
 
-This guide provides a robust foundation for deploying Fennel validators across different cloud providers while maintaining security best practices and SSL/TLS termination.
 
 ---
 
